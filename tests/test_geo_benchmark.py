@@ -1016,6 +1016,21 @@ class TestFetchPageText:
         assert text == ""
 
 
+class TestExtractDomainEdgeCases:
+    """Guard against empty domain causing false-positive citation matches."""
+
+    def test_malformed_url_returns_empty_string(self):
+        """http:// with no host produces empty domain — callers must guard."""
+        from geo_benchmark import extract_domain
+        assert extract_domain("http://") == ""
+
+    def test_empty_domain_matches_every_url(self):
+        """Demonstrates why empty domain is dangerous: '' in any URL = True."""
+        # This is a property test, not a feature — documents the footgun.
+        assert "" in "https://example.com/page"
+        assert "" in "https://totally-unrelated.com"
+
+
 # ---------------------------------------------------------------------------
 # 15. format_text_report — reliability warning + recommendation tiers
 # ---------------------------------------------------------------------------

@@ -587,7 +587,7 @@ def main():
     parser.add_argument("--workers", type=int, default=5,
                         help="Parallel API workers (default: 5)")
     parser.add_argument("--save", action="store_true",
-                        help="Save results to ~/.seo-geo-history/ and show delta from previous run")
+                        help="Save results to ~/.seo-geo-history/ and show delta from previous run (primary domain only, not competitors)")
     parser.add_argument("--competitors", metavar="DOMAINS",
                         help="Comma-separated competitor domains to compare (e.g., competitor1.com,competitor2.com)")
 
@@ -716,6 +716,9 @@ def main():
         for raw in raw_competitors:
             comp_url = raw if raw.startswith(("http://", "https://")) else "https://" + raw
             comp_domain = extract_domain(comp_url)
+            if not comp_domain:
+                print(f"Warning: skipping malformed competitor domain: {raw!r}", file=sys.stderr)
+                continue
             print(f"Benchmarking competitor: {comp_domain}", file=sys.stderr)
             comp_benchmark = run_benchmark(
                 questions=questions,

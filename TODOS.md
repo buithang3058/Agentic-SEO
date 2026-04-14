@@ -1,5 +1,31 @@
 # TODOS
 
+## P3 — After Phase 2.5 (Competitor Benchmark) validated
+
+### TODO-4: Page-level GEO Score (`--page-level` flag)
+
+**What:** Thêm flag `--page-level` vào `geo_benchmark.py`. Khi pass, citation check dùng
+full URL path (`example.com/blog/seo-guide`) thay vì chỉ domain (`example.com`).
+Chỉ count citation đến đúng trang đó, bỏ qua citation đến các trang khác của cùng domain.
+
+**Why:** Domain-level score đo khả năng AI cite *site*, page-level đo khả năng AI cite
+*một trang cụ thể*. Hữu ích khi muốn biết bài blog cụ thể có được AI nhắc đến không.
+
+**Pros:** Granular hơn. Useful cho content marketing (đo từng bài viết).
+
+**Cons:** Cần validate use case thực — ai sẽ dùng và tại sao? Page-level có thể
+cho score rất thấp (AI hay cite homepage, không cite deep pages), gây confusion.
+
+**Context:** Đề xuất từ CEO review 2026-04-14. User hỏi về page-level checking.
+Defer để validate demand trước.
+
+**Effort:** S (team ~2h / CC ~15min) | **Priority:** P3
+**Depends on:** --competitors validated qua ít nhất 2-3 lần chạy thực
+
+**Start:** `extract_domain()` — thêm option giữ lại path. Citation parsers không cần sửa.
+
+---
+
 ## P2 — After Phase 2 (GEO Score Integration) is shipped
 
 ### ~~TODO-1: Competitor GEO Benchmark~~ DONE
