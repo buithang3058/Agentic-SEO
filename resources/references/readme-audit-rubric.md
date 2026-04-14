@@ -1,8 +1,7 @@
 <!-- Updated: 2026-03-08 -->
-# README Audit Rubric (GitHub SEO + Conversion)
+# README Audit Rubric
 
-Use this rubric to grade repository README quality for discoverability,
-comprehension, and conversion.
+Use this rubric to grade README quality for discoverability, comprehension, and conversion.
 
 ## Scoring Categories (100 points)
 

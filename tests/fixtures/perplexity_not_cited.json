@@ -1,0 +1,25 @@
+{
+  "id": "chatcmpl-def456",
+  "model": "sonar",
+  "object": "chat.completion",
+  "citations": [
+    "https://ahrefs.com/blog/seo-audit",
+    "https://moz.com/learn/seo",
+    "https://backlinko.com/seo-audit"
+  ],
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Core Web Vitals are a set of metrics that measure user experience on the web."
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 18,
+    "completion_tokens": 60,
+    "total_tokens": 78
+  }
+}

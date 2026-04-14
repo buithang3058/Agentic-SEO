@@ -1,0 +1,37 @@
+{
+  "id": "resp_abc123",
+  "object": "response",
+  "model": "gpt-4o-search-preview",
+  "output": [
+    {
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "To run an SEO audit, start with technical checks like crawlability and page speed.",
+          "annotations": [
+            {
+              "type": "url_citation",
+              "url": "https://example.com/seo-audit-guide",
+              "title": "SEO Audit Guide",
+              "start_index": 0,
+              "end_index": 20
+            },
+            {
+              "type": "url_citation",
+              "url": "https://moz.com/learn/seo",
+              "title": "Learn SEO",
+              "start_index": 21,
+              "end_index": 50
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "input_tokens": 20,
+    "output_tokens": 80
+  }
+}

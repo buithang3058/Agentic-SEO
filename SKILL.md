@@ -1,17 +1,16 @@
 ---
 name: seo
 description: >
-  Deterministic LLM-first SEO audits for websites, blog posts, and GitHub
-  repositories. Use this when the user asks to "perform SEO analysis", "run SEO
-  audit", "analyze SEO", "check technical SEO", "review schema", "Core Web
-  Vitals", "E-E-A-T", "hreflang", "GEO", "AEO", or GitHub repository SEO
-  optimization. For full/page/repo audits, run bundled scripts for evidence and
-  return prioritized, confidence-labeled fixes.
+  Deterministic LLM-first SEO audits for websites and blog posts. Use this when
+  the user asks to "perform SEO analysis", "run SEO audit", "analyze SEO",
+  "check technical SEO", "review schema", "Core Web Vitals", "E-E-A-T",
+  "hreflang", "GEO", or "AEO". For full/page audits, run bundled scripts for
+  evidence and return prioritized, confidence-labeled fixes.
 ---
 
-# SEO Skill (Agentic / Claude / Codex)
+# SEO Agentic (Antigravity / Claude / Codex)
 
-LLM-first SEO analysis skill with 16 specialized sub-skills, 10 specialist agents, and 33 scripts for website, blog, and GitHub repository optimization.
+LLM-first SEO analysis skill with 15 specialized sub-skills, 7 specialist agents, and 25 scripts for website and blog optimization.
 
 ## Deterministic Trigger Mapping
 
@@ -40,7 +39,6 @@ For prompt reliability in Codex/agent IDEs, map common user wording to a fixed w
 | `seo competitors <url>` | [seo-competitor-pages](resources/skills/seo-competitor-pages.md) | Comparison/alternatives pages |
 | `seo hreflang <url>` | [seo-hreflang](resources/skills/seo-hreflang.md) | International SEO validation |
 | `seo plan <url>` | [seo-plan](resources/skills/seo-plan.md) | Strategic SEO planning |
-| `seo github <repo_or_url>` | [seo-github](resources/skills/seo-github.md) | GitHub repository discoverability, README, topics, community health, and traffic archival |
 | `seo article <url>` | [seo-article](resources/skills/seo-article.md) | Article data extraction & LLM optimization |
 | `seo links <url>` | [seo-links](resources/skills/seo-links.md) | External backlink profile & link health |
 | `seo aeo <url>` | [seo-aeo](resources/skills/seo-aeo.md) | Answer Engine Optimization (Featured Snippets, PAA, Knowledge Panel) |
@@ -59,7 +57,6 @@ Parse the user's request to determine which sub-skill(s) to activate:
 - **Single page**: Read `resources/skills/seo-page.md` — deep dive on one URL
 - **Specific area**: Read the matching `resources/skills/seo-*.md` file
 - **Strategic plan**: Read `resources/skills/seo-plan.md` and the matching `resources/templates/*.md` for the detected industry
-- **GitHub repository SEO**: Read `resources/skills/seo-github.md` and use GitHub scripts with `--provider auto` for API/`gh` fallback.
 - **Generic `perform seo analysis on <url>` request**: treat as single-page full audit, read `resources/skills/seo-page.md`, and generate `FULL-AUDIT-REPORT.md` + `ACTION-PLAN.md`.
 
 ### Step 2 — Collect Evidence
@@ -133,22 +130,6 @@ python3 <SKILL_DIR>/scripts/internal_links.py <url> --depth 1 --max-pages 20
 # Extract article content and perform keyword research for LLM-driven optimization
 python3 <SKILL_DIR>/scripts/article_seo.py <url> --keyword "<optional_target_keyword>" --json
 
-# GitHub repository SEO (provider fallback: auto|api|gh)
-# Auth setup (choose one):
-# export GITHUB_TOKEN="ghp_xxx"   # or export GH_TOKEN="ghp_xxx"
-# gh auth login -h github.com && gh auth status -h github.com
-python3 <SKILL_DIR>/scripts/github_repo_audit.py --repo <owner/repo> --provider auto --json
-python3 <SKILL_DIR>/scripts/github_readme_lint.py README.md --json
-python3 <SKILL_DIR>/scripts/github_community_health.py --repo <owner/repo> --provider auto --json
-# Benchmark/competitor inputs should be provided by LLM/web-search discovery when possible.
-# If omitted, github_seo_report.py auto-derives repo-specific benchmark queries.
-python3 <SKILL_DIR>/scripts/github_search_benchmark.py --repo <owner/repo> --query "<llm_or_web_query>" --provider auto --json
-python3 <SKILL_DIR>/scripts/github_competitor_research.py --repo <owner/repo> --query "<llm_or_web_query>" --provider auto --top-n 6 --json
-python3 <SKILL_DIR>/scripts/github_competitor_research.py --repo <owner/repo> --competitor <owner/repo> --competitor <owner/repo> --provider auto --json
-python3 <SKILL_DIR>/scripts/github_traffic_archiver.py --repo <owner/repo> --provider auto --archive-dir .github-seo-data --json
-python3 <SKILL_DIR>/scripts/github_seo_report.py --repo <owner/repo> --provider auto --markdown GITHUB-SEO-REPORT.md --action-plan GITHUB-ACTION-PLAN.md --json
-# Optional: increase/reduce auto-derived query volume (default: 6)
-# python3 <SKILL_DIR>/scripts/github_seo_report.py --repo <owner/repo> --provider auto --auto-query-max 8 --markdown GITHUB-SEO-REPORT.md --action-plan GITHUB-ACTION-PLAN.md --json
 ```
 
 If a check fails due network, DNS, permissions, or API rate limits:

@@ -1,6 +1,6 @@
-# SEO Skill (Antigravity / Claude / Codex)
+# SEO Agentic (Antigravity / Claude / Codex)
 
-An LLM-first SEO analysis skill for agent IDEs, with 16 specialized sub-skills, 10 specialist agents, and 33 scripts used as evidence collectors and workflow automation.
+An LLM-first SEO analysis skill for agent IDEs, with 15 specialized sub-skills, 7 specialist agents, and 25 scripts used as evidence collectors and workflow automation.
 
 ## IDE Compatibility
 
@@ -10,24 +10,9 @@ An LLM-first SEO analysis skill for agent IDEs, with 16 specialized sub-skills, 
 
 ## 📦 Current Inventory
 
-- Specialized sub-skills: `16`
-- Specialist agents: `10`
-- Scripts in `scripts/`: `33` (`32` Python + `1` shell validation helper)
-
-## 🐙 GitHub SEO Metadata
-
-Recommended GitHub repository description (About field):
-
-```text
-LLM-first SEO skill for Antigravity, Claude, and Codex with 16 sub-skills, 10 specialist agents, and GitHub SEO workflows that output GITHUB-SEO-REPORT.md and GITHUB-ACTION-PLAN.md.
-```
-
-Suggested GitHub topics:
-
-```text
-seo, llm, github-seo, ai-search, geo, aeo, technical-seo, schema, core-web-vitals, codex, claude-code, antigravity
-```
-
+- Specialized sub-skills: `15`
+- Specialist agents: `7`
+- Scripts in `scripts/`: `25` (`24` Python + `1` shell validation helper)
 
 ## ✨ Features
 
@@ -48,7 +33,6 @@ seo, llm, github-seo, ai-search, geo, aeo, technical-seo, schema, core-web-vital
 | `seo competitors` | Comparison & alternatives page generation |
 | `seo hreflang` | International SEO / hreflang validation |
 | `seo plan` | Strategic SEO planning with topical clusters & industry templates |
-| `seo github` | GitHub repository SEO: metadata/topics, README quality, community profile, query benchmarking, traffic archiving |
 
 ## 🧠 LLM-First Workflow
 
@@ -79,9 +63,6 @@ The rubric standardizes:
 - **Schema Markup** — JSON-LD detection, validation, generation
 - **Sitemap** — XML sitemap validation, quality gates
 - **Visual Analysis** — screenshots, above-the-fold, responsiveness (Playwright)
-- **GitHub Analyst** — metadata, topics, README, trust, title strategy
-- **GitHub Benchmark** — query ranking and competitor intelligence
-- **GitHub Data** — API/auth fallback and traffic archival continuity
 - **Verifier (Global)** — dedupe/contradiction suppression before final reporting
 
 ## 📚 Reference Data (Updated Feb 2026)
@@ -105,8 +86,8 @@ Pre-built strategy templates for: **SaaS**, **E-commerce**, **Local Business**, 
 
 ```bash
 # 1) Clone
-git clone https://github.com/Bhanunamikaze/Agentic-SEO-Skill.git
-cd Agentic-SEO-Skill
+git clone https://github.com/buithang/seo-agentic.git
+cd seo-agentic
 
 # 2) Install for your target
 # Antigravity (project-local):
@@ -125,13 +106,13 @@ bash install.sh --target global
 bash install.sh --target all --project-dir /path/to/your/project
 
 # Install from another local checkout:
-bash install.sh --target codex --repo-path /path/to/Agentic-SEO-Skill
+bash install.sh --target codex --repo-path /path/to/seo-agentic
 ```
 
 ### Install directly from GitHub (remote source mode):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Bhanunamikaze/Agentic-SEO-Skill/main/install.sh | \
+curl -fsSL https://raw.githubusercontent.com/buithang/seo-agentic/main/install.sh | \
   bash -s -- --target codex
 ```
 
@@ -140,7 +121,7 @@ curl -fsSL https://raw.githubusercontent.com/Bhanunamikaze/Agentic-SEO-Skill/mai
 ### Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/Bhanunamikaze/Agentic-SEO-Skill.git
+git clone https://github.com/buithang/seo-agentic.git
 ```
 
 ### Step 2: Install Python Dependencies
@@ -162,24 +143,24 @@ If you prefer not to use `install.sh`, copy or symlink manually:
 
 ```bash
 mkdir -p .agent/skills
-cp -r /path/to/Agentic-SEO-Skill .agent/skills/seo
-# or: ln -s /path/to/Agentic-SEO-Skill .agent/skills/seo
+cp -r /path/to/seo-agentic .agent/skills/seo
+# or: ln -s /path/to/seo-agentic .agent/skills/seo
 ```
 
 #### Claude Code (user-global)
 
 ```bash
 mkdir -p ~/.claude/skills
-cp -r /path/to/Agentic-SEO-Skill ~/.claude/skills/seo
-# or: ln -s /path/to/Agentic-SEO-Skill ~/.claude/skills/seo
+cp -r /path/to/seo-agentic ~/.claude/skills/seo
+# or: ln -s /path/to/seo-agentic ~/.claude/skills/seo
 ```
 
 #### Codex (user-global)
 
 ```bash
 mkdir -p ~/.codex/skills
-cp -r /path/to/Agentic-SEO-Skill ~/.codex/skills/seo
-# or: ln -s /path/to/Agentic-SEO-Skill ~/.codex/skills/seo
+cp -r /path/to/seo-agentic ~/.codex/skills/seo
+# or: ln -s /path/to/seo-agentic ~/.codex/skills/seo
 ```
 
 ### Step 4: Verify Triggering
@@ -190,7 +171,6 @@ The skill will auto-trigger when you mention SEO-related keywords in your IDE. T
 - *"Check the schema markup on my homepage"*
 - *"Analyze Core Web Vitals for my site"*
 - *"Create an SEO plan for my SaaS product"*
-- *"Run GitHub SEO analysis for owner/repo"*
 
 ---
 
@@ -225,7 +205,6 @@ Here's how specific phrases map to the skill's capabilities:
 | "Find content gaps" / "competitor analysis" | 📊 Gap analysis | None (LLM reasoning) | `competitor_gap.py` |
 | "Check for duplicates" / "thin content" | 📋 Dupe check | **Content** | `duplicate_content.py` |
 | "GSC data" / "Search Console" | 📈 GSC only | None | `gsc_checker.py` |
-| "GitHub SEO" / "optimize this repo" | 🐙 Repository | **GitHub Analyst** + **Benchmark** + **Data** + **Verifier** | `github_repo_audit.py`, `github_readme_lint.py`, `github_community_health.py`, `github_search_benchmark.py`, `github_competitor_research.py`, `github_traffic_archiver.py`, `github_seo_report.py`, `finding_verifier.py` (outputs `GITHUB-SEO-REPORT.md` + `GITHUB-ACTION-PLAN.md`) |
 
 ### Domain vs URL vs Blog Post — What's Different?
 
@@ -408,12 +387,6 @@ Example generated dashboard:
 Use scripts when you need additional verification or structured JSON outputs.
 
 ```bash
-# GitHub auth setup for repository SEO scripts (choose one)
-export GITHUB_TOKEN="ghp_xxx"   # or: export GH_TOKEN="ghp_xxx"
-# or authenticate gh CLI:
-gh auth login -h github.com
-gh auth status -h github.com
-
 # Example target
 URL="https://example.com"
 
@@ -443,20 +416,6 @@ python3 scripts/link_profile.py "$URL" --json
 python3 scripts/competitor_gap.py "$URL" --competitor https://competitor.com --json
 # python3 scripts/gsc_checker.py "$URL" --credentials creds.json --json  # requires GSC credentials
 # python3 scripts/indexnow_checker.py "$URL" --key YOUR_KEY --json          # requires IndexNow key
-
-# GitHub repository SEO scripts (provider fallback: auto|api|gh)
-python3 scripts/github_repo_audit.py --repo owner/repo --provider auto --json
-python3 scripts/github_readme_lint.py README.md --json
-python3 scripts/github_community_health.py --repo owner/repo --provider auto --json
-# Provide query/competitor inputs from LLM/web-search discovery when possible:
-python3 scripts/github_search_benchmark.py --repo owner/repo --query "<llm_or_web_query>" --provider auto --json
-python3 scripts/github_competitor_research.py --repo owner/repo --query "<llm_or_web_query>" --provider auto --top-n 6 --json
-python3 scripts/github_competitor_research.py --repo owner/repo --competitor owner/repo --competitor owner/repo --provider auto --json
-python3 scripts/github_traffic_archiver.py --repo owner/repo --provider auto --archive-dir .github-seo-data --json
-# github_seo_report.py auto-derives repo-specific benchmark queries if none are provided
-python3 scripts/github_seo_report.py --repo owner/repo --provider auto --markdown GITHUB-SEO-REPORT.md --action-plan GITHUB-ACTION-PLAN.md --json
-# Optional: tune auto-derived query count (default: 6)
-# python3 scripts/github_seo_report.py --repo owner/repo --provider auto --auto-query-max 8 --markdown GITHUB-SEO-REPORT.md --action-plan GITHUB-ACTION-PLAN.md --json
 
 # Generic verifier stage (can be used by any workflow before final reporting)
 python3 scripts/finding_verifier.py --findings-json raw-findings.json --json

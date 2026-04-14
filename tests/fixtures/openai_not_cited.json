@@ -1,0 +1,30 @@
+{
+  "id": "resp_def456",
+  "object": "response",
+  "model": "gpt-4o-search-preview",
+  "output": [
+    {
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "Core Web Vitals measure loading, interactivity, and visual stability.",
+          "annotations": [
+            {
+              "type": "url_citation",
+              "url": "https://developers.google.com/search/docs/appearance/core-web-vitals",
+              "title": "Core Web Vitals",
+              "start_index": 0,
+              "end_index": 30
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "input_tokens": 18,
+    "output_tokens": 50
+  }
+}

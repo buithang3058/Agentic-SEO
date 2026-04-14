@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_URL="${REPO_URL:-https://github.com/Bhanunamikaze/Agentic-SEO-Skill.git}"
+REPO_URL="${REPO_URL:-https://github.com/buithang/seo-agentic.git}"
 SKILL_NAME="seo"
 TARGET="antigravity"
 PROJECT_DIR="$(pwd)"
@@ -45,16 +45,16 @@ Examples:
   bash install.sh --target global
 
   # Install from a local checkout path
-  bash install.sh --target antigravity --project-dir /path/to/project --repo-path /path/to/Agentic-SEO-Skill
+  bash install.sh --target antigravity --project-dir /path/to/project --repo-path /path/to/seo-agentic
 
   # Install from a custom remote repository URL
-  bash install.sh --target codex --source remote --repo-url https://github.com/you/Agentic-SEO-Skill.git
+  bash install.sh --target codex --source remote --repo-url https://github.com/you/seo-agentic.git
 
   # All targets
   bash install.sh --target all --project-dir /path/to/project
 
   # Pipe install from GitHub
-  curl -fsSL https://raw.githubusercontent.com/Bhanunamikaze/Agentic-SEO-Skill/main/install.sh | \
+  curl -fsSL https://raw.githubusercontent.com/buithang/seo-agentic/main/install.sh | \
     bash -s -- --target codex
 EOF
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 $ErrorActionPreference = 'Stop'
 
-$REPO_URL = if ($env:REPO_URL) { $env:REPO_URL } else { 'https://github.com/Bhanunamikaze/Agentic-SEO-Skill.git' }
+$REPO_URL = if ($env:REPO_URL) { $env:REPO_URL } else { 'https://github.com/buithang/seo-agentic.git' }
 $SKILL_NAME = 'seo'
 $TARGET = 'antigravity'
 $PROJECT_DIR = (Get-Location).Path
@@ -45,10 +45,10 @@ Examples:
   pwsh ./install.ps1 --target global
 
   # Install from a local checkout path
-  pwsh ./install.ps1 --target antigravity --project-dir /path/to/project --repo-path /path/to/Agentic-SEO-Skill
+  pwsh ./install.ps1 --target antigravity --project-dir /path/to/project --repo-path /path/to/seo-agentic
 
   # Install from a custom remote repository URL
-  pwsh ./install.ps1 --target codex --source remote --repo-url https://github.com/you/Agentic-SEO-Skill.git
+  pwsh ./install.ps1 --target codex --source remote --repo-url https://github.com/you/seo-agentic.git
 
   # All targets
   pwsh ./install.ps1 --target all --project-dir /path/to/project

@@ -1,0 +1,25 @@
+{
+  "id": "chatcmpl-abc123",
+  "model": "sonar",
+  "object": "chat.completion",
+  "citations": [
+    "https://example.com/seo-audit-guide",
+    "https://ahrefs.com/blog/seo-audit",
+    "https://moz.com/learn/seo"
+  ],
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "To perform an SEO audit, you should start by checking technical factors like crawlability and site speed."
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 20,
+    "completion_tokens": 80,
+    "total_tokens": 100
+  }
+}
