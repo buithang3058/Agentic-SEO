@@ -10,7 +10,15 @@ JSON output includes `domains[]` array. 4 new tests added (65 total).
 
 ---
 
-### TODO-2: GEO Score trong seo-plan sub-skill
+### ~~TODO-2: GEO Score trong seo-plan sub-skill~~ DONE
+
+**Shipped:** Added Step 5.5 "AI Visibility Plan (GEO)" to `seo-plan.md` — GEO Score baseline,
+score interpretation table, uncited query actions, quarterly timeline, new `AI-VISIBILITY-PLAN.md`
+deliverable, and GEO Score row in KPI table.
+
+---
+
+### TODO-2 (archived):
 
 **What:** Khi user chạy `seo plan <url>`, thêm section "AI Visibility Plan" sau các
 section Technical/Content/Links hiện tại. Section này bao gồm:

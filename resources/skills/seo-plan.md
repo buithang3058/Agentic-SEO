@@ -91,6 +91,47 @@ description: >
 - AI search readiness requirements
 - Mobile-first considerations
 
+### 5.5 AI Visibility Plan (GEO)
+
+**Why:** AI search engines (Perplexity, ChatGPT, Claude) now drive discovery for many queries.
+A plan without AI citation strategy is missing a growing traffic channel.
+
+#### Measure current GEO Score (if URL provided and PERPLEXITY_API_KEY is set)
+
+```bash
+python3 <SKILL_DIR>/scripts/geo_benchmark.py <url> --n 20
+```
+
+Embed the `## AI Visibility Score` output block into `SEO-STRATEGY.md` as a baseline.
+If PERPLEXITY_API_KEY is not set, note: `[GEO Score skipped — set PERPLEXITY_API_KEY to enable]`
+
+#### Interpret the score
+
+| GEO Score | Signal | Priority actions |
+|-----------|--------|-----------------|
+| 0-20 | AI engines rarely cite this site | llms.txt, FAQ pages, unblock AI crawlers |
+| 21-49 | Partial visibility | Expand thin content, add structured data |
+| 50-79 | Good citation rate | Maintain freshness, add entity signals |
+| 80-100 | Strong AI visibility | Monitor competitors, protect lead |
+
+#### Priority actions from uncited queries
+
+For each question in the "Not cited" list from the benchmark output:
+- Create or expand a page targeting that topic
+- Add an FAQ section with the exact question phrasing
+- Add a pointer to that page in `/llms.txt`
+
+Cap at top 5 uncited queries for the plan. Flag queries with commercial intent first.
+
+#### Suggested AI visibility timeline
+
+| Quarter | Action |
+|---------|--------|
+| Q1 | Add `/llms.txt`, unblock GPTBot/PerplexityBot/ClaudeBot in robots.txt |
+| Q2 | Add FAQ sections for top 5 uncited queries |
+| Q3 | Publish entity-building content (about page, author bios, brand mentions) |
+| Q4 | Re-run benchmark, compare delta, adjust content based on gaps |
+
 ### 6. Implementation Roadmap (4 phases)
 
 #### Phase 1 — Foundation (weeks 1-4)
@@ -130,12 +171,13 @@ Load from `resources/templates/`:
 ## Output
 
 ### Deliverables
-- `SEO-STRATEGY.md` — Complete strategic plan
+- `SEO-STRATEGY.md` — Complete strategic plan (includes GEO Score baseline if measured)
 - `COMPETITOR-ANALYSIS.md` — Competitive insights
 - `CONTENT-CALENDAR.md` — Content roadmap
 - `IMPLEMENTATION-ROADMAP.md` — Phased action plan
 - `SITE-STRUCTURE.md` — URL hierarchy and architecture
 - `TOPIC-CLUSTERS.md` — Pillar/cluster mapping with internal link plan
+- `AI-VISIBILITY-PLAN.md` — GEO Score baseline, uncited query actions, quarterly timeline
 
 ### KPI Targets
 | Metric | Baseline | 3 Month | 6 Month | 12 Month |
@@ -146,6 +188,7 @@ Load from `resources/templates/`:
 | Indexed Pages | ... | ... | ... | ... |
 | Core Web Vitals | ... | ... | ... | ... |
 | Topical Coverage % | ... | ... | ... | ... |
+| GEO Score | ... | ... | ... | ... |
 
 ### Success Criteria
 - Clear, measurable goals per phase
