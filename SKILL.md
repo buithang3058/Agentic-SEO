@@ -30,7 +30,7 @@ For prompt reliability in Codex/agent IDEs, map common user wording to a fixed w
 | `seo audit <url>` | [seo-audit](resources/skills/seo-audit.md) | Full website audit with scoring |
 | `seo page <url>` | [seo-page](resources/skills/seo-page.md) | Deep single-page analysis |
 | `seo technical <url>` | [seo-technical](resources/skills/seo-technical.md) | Technical SEO checks |
-| `seo content <url>` | [seo-content](resources/skills/seo-content.md) | Content quality & E-E-A-T |
+| `content audit <url>` | [content-audit](resources/skills/content-audit.md) | Content quality & E-E-A-T |
 | `seo schema <url>` | [seo-schema](resources/skills/seo-schema.md) | Schema detection/validation/generation |
 | `seo sitemap <url>` | [seo-sitemap](resources/skills/seo-sitemap.md) | Sitemap analysis & generation |
 | `seo images <url>` | [seo-images](resources/skills/seo-images.md) | Image optimization audit |
@@ -162,7 +162,7 @@ For comprehensive audits, read the relevant agent file from `resources/agents/` 
 | Agent | File | Focus Area |
 |-------|------|------------|
 | Technical SEO | [seo-technical.md](resources/agents/seo-technical.md) | Crawlability, indexability, security, URLs, mobile, CWV, JS rendering |
-| Content Quality | [seo-content.md](resources/agents/seo-content.md) | E-E-A-T assessment, content metrics, AI content detection |
+| Content Quality | [seo-content.md](resources/agents/seo-content.md) | E-E-A-T assessment, content metrics, AI content detection | (used by content-audit skill) |
 | Performance | [seo-performance.md](resources/agents/seo-performance.md) | Core Web Vitals (LCP, INP, CLS), optimization recommendations |
 | Schema Markup | [seo-schema.md](resources/agents/seo-schema.md) | Detection, validation, generation of JSON-LD structured data |
 | Sitemap | [seo-sitemap.md](resources/agents/seo-sitemap.md) | XML sitemap validation, generation, quality gates |
