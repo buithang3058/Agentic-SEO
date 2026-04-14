@@ -26,12 +26,14 @@ Install dependencies:
 """
 
 import argparse
+import glob
 import json
 import math
 import os
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
 from typing import Optional
 from urllib.parse import urlparse
 
@@ -413,6 +415,22 @@ def format_text_report(domain: str, score_data: dict, benchmark: dict, sufficien
     not_cited = [r for r in benchmark["results"] if not r.get("cited") and not r.get("skipped")]
     skipped = [r for r in benchmark["results"] if r.get("skipped")]
 
+    # Per-engine breakdown (only shown in dual-engine mode)
+    active_engines = benchmark["engine_pair"].split("+")
+    if len(active_engines) >= 2:
+        n = score_data["n"]
+        results = benchmark["results"]
+        a = sum(1 for r in results if "perplexity" in r.get("engines_citing", []))
+        b = sum(1 for r in results if "openai" in r.get("engines_citing", []))
+        c = sum(1 for r in results if "perplexity" in r.get("engines_citing", []) and "openai" in r.get("engines_citing", []))
+        d = a + b - c  # union = GEO Score numerator
+        lines.append("Per-engine breakdown:")
+        lines.append(f"  Perplexity (sonar):      {a/n*100:.0f}% ({a}/{n})")
+        lines.append(f"  OpenAI (gpt-4o-search):  {b/n*100:.0f}% ({b}/{n})")
+        lines.append(f"  Both engines cited:      {c/n*100:.0f}% ({c}/{n})")
+        lines.append(f"  Either engine (GEO):     {d/n*100:.0f}% ({d}/{n})")
+        lines.append("")
+
     if cited:
         lines.append(f"Cited ({len(cited)}/{score_data['n']}):")
         for r in cited:
@@ -443,6 +461,22 @@ def format_text_report(domain: str, score_data: dict, benchmark: dict, sufficien
     else:
         lines.append("  - Strong citation rate — maintain content freshness and internal linking")
 
+    # llms.txt content gap hints — shown when any questions were not cited
+    not_cited_questions = [r["query"] for r in benchmark["results"] if not r.get("cited") and not r.get("skipped")]
+    if not_cited_questions:
+        lines.append("")
+        lines.append("## llms.txt Content Gap Hints")
+        lines.append("")
+        lines.append("Based on uncited queries, consider adding these topic pointers to /llms.txt:")
+        lines.append("")
+        for q in not_cited_questions[:5]:
+            topic = q.rstrip("?")
+            lines.append(f'  "{q}" -> add a pointer to your {topic} page in /llms.txt')
+        if len(not_cited_questions) > 5:
+            lines.append(f"  (showing 5 of {len(not_cited_questions)} — run with --n 30 for broader coverage)")
+        lines.append("")
+        lines.append("See https://llmstxt.org for llms.txt format.")
+
     return "\n".join(lines)
 
 
@@ -468,6 +502,8 @@ def main():
                         help="Save JSON output to file")
     parser.add_argument("--workers", type=int, default=5,
                         help="Parallel API workers (default: 5)")
+    parser.add_argument("--save", action="store_true",
+                        help="Save results to ~/.seo-geo-history/ and show delta from previous run")
 
     args = parser.parse_args()
 
@@ -561,6 +597,16 @@ def main():
     score_data = compute_score(answered)
     sufficiency = check_data_sufficiency(len(questions), benchmark["skipped_count"])
 
+    # Per-engine stats for JSON output
+    n = score_data["n"]
+    results = benchmark["results"]
+    per_engine = {}
+    for engine_name in benchmark["engine_pair"].split("+"):
+        per_engine[engine_name] = {
+            "cited": sum(1 for r in results if engine_name in r.get("engines_citing", [])),
+            "total": n,
+        }
+
     # Build output
     output = {
         "url": args.url,
@@ -569,6 +615,7 @@ def main():
         "n": score_data["n"],
         "margin_of_error": score_data["margin_of_error"],
         "engine_pair": benchmark["engine_pair"],
+        "per_engine": per_engine,
         "reliable": sufficiency["reliable"],
         "results": benchmark["results"],
     }
@@ -582,11 +629,48 @@ def main():
             json.dump(output, f, indent=2, ensure_ascii=False)
         print(f"Saved to {args.output}", file=sys.stderr)
 
+    # Historical save + delta
+    delta_lines = []
+    if args.save:
+        history_dir = os.path.expanduser("~/.seo-geo-history/")
+        domain_slug = domain.replace("/", "-")
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d-%H%M%S")
+        save_path = os.path.join(history_dir, f"{domain_slug}-{timestamp}.json")
+        save_payload = dict(output)
+        save_payload["timestamp"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        try:
+            os.makedirs(history_dir, exist_ok=True)
+            with open(save_path, "w", encoding="utf-8") as f:
+                json.dump(save_payload, f, indent=2, ensure_ascii=False)
+            print(f"Saved to {save_path}", file=sys.stderr)
+            # Find previous run (newest file excluding just-written)
+            pattern = os.path.join(history_dir, f"{domain_slug}-*.json")
+            history_files = sorted(glob.glob(pattern))
+            previous_files = [p for p in history_files if p != save_path]
+            if previous_files:
+                with open(previous_files[-1], encoding="utf-8") as f:
+                    previous = json.load(f)
+                prev_score = previous.get("score", 0)
+                curr_score = score_data["score"]
+                delta = curr_score - prev_score
+                prev_date = previous.get("timestamp", previous_files[-1])[:10]
+                delta_sign = "+" if delta >= 0 else ""
+                delta_lines.append("")
+                delta_lines.append(f"Previous run: {prev_date} -> Score: {prev_score:.0f}/100")
+                delta_lines.append(f"This run: {timestamp[:10]} -> Score: {curr_score:.0f}/100 ({delta_sign}{delta:.0f} points)")
+                if abs(delta) < score_data["margin_of_error"]:
+                    delta_lines.append(f"Note: delta ({delta_sign}{delta:.0f}) is within margin of error (±{score_data['margin_of_error']:.0f}) — not statistically significant")
+        except Exception as e:
+            print(f"Warning: could not save history: {e}", file=sys.stderr)
+
     if args.output_json or args.output:
         if not args.output:
             print(json.dumps(output, indent=2, ensure_ascii=False))
     else:
-        print(format_text_report(domain, score_data, benchmark, sufficiency))
+        report = format_text_report(domain, score_data, benchmark, sufficiency)
+        if delta_lines:
+            report += "\n" + "\n".join(delta_lines)
+        print(report)
 
 
 if __name__ == "__main__":

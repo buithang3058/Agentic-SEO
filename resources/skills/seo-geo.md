@@ -186,6 +186,22 @@ New standard (December 2025) for machine-readable AI licensing terms.
 
 ---
 
+## Measured GEO Score
+
+Run `geo_benchmark.py` for empirical citation rate (requires at least one API key):
+
+    python3 <SKILL_DIR>/scripts/geo_benchmark.py <url> --n 20
+
+Keys: `PERPLEXITY_API_KEY` and/or `OPENAI_API_KEY`. Either alone enables single-engine mode.
+
+`<SKILL_DIR>` = the skill install path (e.g., `~/.claude/skills/seo` or the
+project-local `.claude/skills/seo`). The executing agent resolves this from context.
+
+Embed the full text output (the `## AI Visibility Score` section) into `GEO-ANALYSIS.md`.
+The qualitative analysis sections above are retained alongside the measured score.
+
+---
+
 ## Output
 
 Generate `GEO-ANALYSIS.md` with:

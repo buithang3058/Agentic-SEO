@@ -22,6 +22,21 @@ Apply `resources/references/llm-audit-rubric.md` for evidence standards, confide
    - `seo-sitemap` — structure analysis, quality gates, missing pages
    - `seo-performance` — LCP, INP, CLS measurements
    - `seo-visual` — screenshots, mobile testing, above-fold analysis
+
+### GEO Score (AI Visibility)
+
+Only for URL targets. If `PERPLEXITY_API_KEY` or `OPENAI_API_KEY` is set:
+
+    python3 <SKILL_DIR>/scripts/geo_benchmark.py <url> --n 20
+
+Append the output (the `## AI Visibility Score` block) to the end of `FULL-AUDIT-REPORT.md`.
+This section is append-only — does not modify existing report format.
+
+If neither key is set, append:
+`[GEO Score skipped: set PERPLEXITY_API_KEY or OPENAI_API_KEY to enable]`
+
+Performance: adds ~30-60s at N=20, workers=5.
+For faster iterative work: `--n 10` (~15-30s, MOE ±31%).
 4. **LLM analysis** — Apply `llm-audit-rubric.md`, score each category using chain-of-thought. Combine LLM reasoning with script evidence. If a script failed, the LLM still covers that area using its own analysis (confidence: `Likely` instead of `Confirmed`).
 5. **Score** — aggregate into SEO Health Score (0-100)
 6. **Report** — generate prioritized action plan

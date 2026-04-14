@@ -441,3 +441,332 @@ class TestURLSchemeNormalization:
 
         assert captured_url.get("url", "").startswith("http://")
         assert not captured_url.get("url", "").startswith("https://")
+
+
+# ---------------------------------------------------------------------------
+# 9. Per-engine breakdown
+# ---------------------------------------------------------------------------
+
+class TestPerEngineBreakdown:
+    """
+    Per-engine breakdown: A=perplexity cited, B=openai cited, C=both, D=A+B-C (GEO)
+    Must match GEO Score. Only shown in dual-engine mode.
+    """
+
+    def test_breakdown_math_d_equals_geo_numerator(self):
+        """D = A + B - C must equal the GEO Score numerator."""
+        from geo_benchmark import format_text_report, compute_score
+        results = [
+            {"query": "q1", "cited": True,  "engines_citing": ["perplexity", "openai"], "skipped": False},
+            {"query": "q2", "cited": True,  "engines_citing": ["perplexity"],           "skipped": False},
+            {"query": "q3", "cited": True,  "engines_citing": ["openai"],               "skipped": False},
+            {"query": "q4", "cited": False, "engines_citing": [],                       "skipped": False},
+        ]
+        benchmark = {"results": results, "skipped_count": 0, "engine_pair": "perplexity+openai"}
+        score_data = compute_score(results)
+        sufficiency = {"reliable": True, "message": ""}
+        report = format_text_report("example.com", score_data, benchmark, sufficiency)
+
+        # A=2, B=2, C=1, D=3 — GEO Score = 3/4 = 75%
+        assert "Either engine (GEO):     75%" in report
+        assert f"GEO Score: 75/100" in report
+
+    def test_breakdown_shown_in_dual_engine_mode(self):
+        from geo_benchmark import format_text_report, compute_score
+        results = [{"query": "q1", "cited": True, "engines_citing": ["perplexity", "openai"], "skipped": False}]
+        benchmark = {"results": results, "skipped_count": 0, "engine_pair": "perplexity+openai"}
+        score_data = compute_score(results)
+        sufficiency = {"reliable": True, "message": ""}
+        report = format_text_report("example.com", score_data, benchmark, sufficiency)
+        assert "Per-engine breakdown:" in report
+
+    def test_breakdown_not_shown_in_single_engine_mode(self):
+        from geo_benchmark import format_text_report, compute_score
+        results = [{"query": "q1", "cited": True, "engines_citing": ["perplexity"], "skipped": False}]
+        benchmark = {"results": results, "skipped_count": 0, "engine_pair": "perplexity"}
+        score_data = compute_score(results)
+        sufficiency = {"reliable": True, "message": ""}
+        report = format_text_report("example.com", score_data, benchmark, sufficiency)
+        assert "Per-engine breakdown:" not in report
+
+    def test_per_engine_json_field(self):
+        """JSON output includes per_engine with cited/total per engine."""
+        from geo_benchmark import run_benchmark, compute_score
+        perplexity_cited = load_fixture("perplexity_cited.json")
+        openai_not_cited = load_fixture("openai_not_cited.json")
+
+        responses = iter([perplexity_cited, openai_not_cited])
+
+        with patch("geo_benchmark.query_engine_with_retry", side_effect=lambda fn, q, **kw: next(responses)):
+            result = run_benchmark(
+                questions=["test?"],
+                domain="example.com",
+                perplexity_key="fake",
+                openai_key="fake_openai",
+            )
+
+        assert result["engine_pair"] == "perplexity+openai"
+        # Verify engines_citing reflects which engine actually cited
+        r = result["results"][0]
+        assert "perplexity" in r["engines_citing"]
+        assert "openai" not in r["engines_citing"]
+
+
+# ---------------------------------------------------------------------------
+# 10. llms.txt content gap hints
+# ---------------------------------------------------------------------------
+
+class TestLlmsTxtHints:
+    """
+    Hints appear when any questions were not cited.
+    Capped at 5. Not shown when all questions were cited.
+    """
+
+    def test_hints_appear_when_not_cited(self):
+        from geo_benchmark import format_text_report, compute_score
+        results = [
+            {"query": "How to improve SEO?", "cited": False, "engines_citing": [], "skipped": False},
+        ]
+        benchmark = {"results": results, "skipped_count": 0, "engine_pair": "perplexity"}
+        score_data = compute_score(results)
+        sufficiency = {"reliable": True, "message": ""}
+        report = format_text_report("example.com", score_data, benchmark, sufficiency)
+        assert "llms.txt Content Gap Hints" in report
+        assert '"How to improve SEO?"' in report
+
+    def test_hints_not_shown_when_all_cited(self):
+        from geo_benchmark import format_text_report, compute_score
+        results = [
+            {"query": "How to improve SEO?", "cited": True, "engines_citing": ["perplexity"], "skipped": False},
+        ]
+        benchmark = {"results": results, "skipped_count": 0, "engine_pair": "perplexity"}
+        score_data = compute_score(results)
+        sufficiency = {"reliable": True, "message": ""}
+        report = format_text_report("example.com", score_data, benchmark, sufficiency)
+        assert "llms.txt Content Gap Hints" not in report
+
+    def test_hints_capped_at_five(self):
+        from geo_benchmark import format_text_report, compute_score
+        results = [
+            {"query": f"Question {i}?", "cited": False, "engines_citing": [], "skipped": False}
+            for i in range(10)
+        ]
+        benchmark = {"results": results, "skipped_count": 0, "engine_pair": "perplexity"}
+        score_data = compute_score(results)
+        sufficiency = {"reliable": True, "message": ""}
+        report = format_text_report("example.com", score_data, benchmark, sufficiency)
+        # Extract just the llms.txt hints section
+        hints_section = report.split("## llms.txt Content Gap Hints")[-1]
+        # Hints cap at 5: "Question 4?" is the 5th (0-indexed), "Question 5?" must not be a hint
+        assert '"Question 4?"' in hints_section
+        assert '"Question 5?"' not in hints_section
+
+    def test_skipped_questions_not_in_hints(self):
+        from geo_benchmark import format_text_report, compute_score
+        results = [
+            {"query": "Good question?", "cited": False, "engines_citing": [], "skipped": False},
+            {"query": "Skipped question?", "cited": False, "engines_citing": [], "skipped": True},
+        ]
+        benchmark = {"results": results, "skipped_count": 1, "engine_pair": "perplexity"}
+        score_data = compute_score([r for r in results if not r.get("skipped")])
+        sufficiency = {"reliable": True, "message": ""}
+        report = format_text_report("example.com", score_data, benchmark, sufficiency)
+        hints_section = report.split("## llms.txt Content Gap Hints")[-1]
+        assert '"Good question?"' in hints_section
+        assert '"Skipped question?"' not in hints_section
+
+
+# ---------------------------------------------------------------------------
+# 11. --save flag: writes JSON, domain slug normalizes /, delta computation
+# ---------------------------------------------------------------------------
+
+class TestSaveFlag:
+    """
+    --save writes JSON to history dir.
+    Domain slug normalizes '/' (for github.com/owner/repo).
+    Second run shows delta.
+    """
+
+    def test_save_writes_valid_json(self, tmp_path, monkeypatch):
+        """--save writes a JSON file with the correct schema."""
+        import geo_benchmark
+        monkeypatch.setenv("PERPLEXITY_API_KEY", "fake")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.setattr("sys.argv", [
+            "geo_benchmark.py", "https://example.com", "--n", "1", "--save",
+        ])
+        monkeypatch.setattr("geo_benchmark.fetch_headings", lambda url, timeout=15: [("h2", "Test")])
+        monkeypatch.setattr("geo_benchmark.run_benchmark", lambda **kw: {
+            "results": [{"query": "How to Test?", "cited": True, "engines_citing": ["perplexity"], "skipped": False}],
+            "skipped_count": 0,
+            "engine_pair": "perplexity",
+        })
+        history_dir = str(tmp_path / "seo-geo-history")
+        monkeypatch.setattr("geo_benchmark.os.path.expanduser", lambda p: p.replace("~/.seo-geo-history/", history_dir + "/"))
+
+        geo_benchmark.main()
+
+        files = list(tmp_path.glob("seo-geo-history/*.json"))
+        assert len(files) == 1
+        with open(files[0]) as f:
+            data = json.load(f)
+        assert data["domain"] == "example.com"
+        assert "score" in data
+        assert "timestamp" in data
+        assert "per_engine" in data
+
+    def test_domain_slug_normalizes_slash(self, tmp_path, monkeypatch):
+        """github.com/owner/repo domain has / replaced with - in filename."""
+        import geo_benchmark
+        monkeypatch.setenv("PERPLEXITY_API_KEY", "fake")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.setattr("sys.argv", [
+            "geo_benchmark.py", "https://github.com/owner/repo", "--n", "1", "--save",
+        ])
+        monkeypatch.setattr("geo_benchmark.fetch_headings", lambda url, timeout=15: [("h2", "Test")])
+        monkeypatch.setattr("geo_benchmark.run_benchmark", lambda **kw: {
+            "results": [{"query": "How to Test?", "cited": False, "engines_citing": [], "skipped": False}],
+            "skipped_count": 0,
+            "engine_pair": "perplexity",
+        })
+        history_dir = str(tmp_path / "seo-geo-history")
+        monkeypatch.setattr("geo_benchmark.os.path.expanduser", lambda p: p.replace("~/.seo-geo-history/", history_dir + "/"))
+
+        geo_benchmark.main()
+
+        files = list(tmp_path.glob("seo-geo-history/*.json"))
+        assert len(files) == 1
+        assert "/" not in files[0].name
+
+
+# ---------------------------------------------------------------------------
+# 12. Delta with MOE note
+# ---------------------------------------------------------------------------
+
+class TestDeltaMOE:
+    """
+    Delta shown on second run.
+    'not statistically significant' note when abs(delta) < MOE.
+    No note when delta exceeds MOE.
+    """
+
+    def _make_history_file(self, history_dir, domain_slug, score, timestamp="2026-04-07-000000"):
+        os.makedirs(history_dir, exist_ok=True)
+        path = os.path.join(history_dir, f"{domain_slug}-{timestamp}.json")
+        data = {"domain": domain_slug, "score": score, "timestamp": "2026-04-07T00:00:00Z", "n": 20, "margin_of_error": 21.91}
+        with open(path, "w") as f:
+            json.dump(data, f)
+        return path
+
+    def test_delta_shown_on_second_run(self, tmp_path, monkeypatch):
+        """Second run shows previous score and delta."""
+        import geo_benchmark
+        history_dir = str(tmp_path / "hist")
+        self._make_history_file(history_dir, "example.com", score=40.0)
+
+        monkeypatch.setenv("PERPLEXITY_API_KEY", "fake")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.setattr("sys.argv", [
+            "geo_benchmark.py", "https://example.com", "--n", "20", "--save",
+        ])
+        monkeypatch.setattr("geo_benchmark.fetch_headings", lambda url, timeout=15: [("h2", f"H{i}") for i in range(20)])
+        # 9 cited out of 20 = 45%
+        cited_flags = [True] * 9 + [False] * 11
+        monkeypatch.setattr("geo_benchmark.run_benchmark", lambda **kw: {
+            "results": [
+                {"query": f"How to H{i}?", "cited": cited_flags[i], "engines_citing": ["perplexity"] if cited_flags[i] else [], "skipped": False}
+                for i in range(20)
+            ],
+            "skipped_count": 0,
+            "engine_pair": "perplexity",
+        })
+        monkeypatch.setattr("geo_benchmark.os.path.expanduser", lambda p: p.replace("~/.seo-geo-history/", history_dir + "/"))
+
+        captured = []
+        original_print = print
+        def mock_print(*args, **kwargs):
+            if kwargs.get("file") is sys.stderr:
+                original_print(*args, **kwargs)
+            else:
+                captured.append(" ".join(str(a) for a in args))
+        monkeypatch.setattr("builtins.print", mock_print)
+
+        geo_benchmark.main()
+
+        full_output = "\n".join(captured)
+        assert "Previous run:" in full_output
+        assert "Score: 40/100" in full_output
+
+    def test_moe_note_when_delta_within_moe(self, tmp_path, monkeypatch):
+        """When delta < MOE, show 'not statistically significant' note."""
+        import geo_benchmark
+        history_dir = str(tmp_path / "hist")
+        # Previous score 40, current will be 45 — delta=5, MOE≈21 — within MOE
+        self._make_history_file(history_dir, "example.com", score=40.0)
+
+        monkeypatch.setenv("PERPLEXITY_API_KEY", "fake")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.setattr("sys.argv", [
+            "geo_benchmark.py", "https://example.com", "--n", "20", "--save",
+        ])
+        monkeypatch.setattr("geo_benchmark.fetch_headings", lambda url, timeout=15: [("h2", f"H{i}") for i in range(20)])
+        cited_flags = [True] * 9 + [False] * 11  # 45%
+        monkeypatch.setattr("geo_benchmark.run_benchmark", lambda **kw: {
+            "results": [
+                {"query": f"How to H{i}?", "cited": cited_flags[i], "engines_citing": ["perplexity"] if cited_flags[i] else [], "skipped": False}
+                for i in range(20)
+            ],
+            "skipped_count": 0,
+            "engine_pair": "perplexity",
+        })
+        monkeypatch.setattr("geo_benchmark.os.path.expanduser", lambda p: p.replace("~/.seo-geo-history/", history_dir + "/"))
+
+        captured = []
+        original_print = print
+        def mock_print(*args, **kwargs):
+            if kwargs.get("file") is sys.stderr:
+                original_print(*args, **kwargs)
+            else:
+                captured.append(" ".join(str(a) for a in args))
+        monkeypatch.setattr("builtins.print", mock_print)
+
+        geo_benchmark.main()
+        full_output = "\n".join(captured)
+        assert "not statistically significant" in full_output
+
+    def test_no_moe_note_when_delta_exceeds_moe(self, tmp_path, monkeypatch):
+        """When delta > MOE, do NOT show the insignificance note."""
+        import geo_benchmark
+        history_dir = str(tmp_path / "hist")
+        # Previous score 0, current will be 100 — delta=100, far exceeds MOE
+        self._make_history_file(history_dir, "example.com", score=0.0)
+
+        monkeypatch.setenv("PERPLEXITY_API_KEY", "fake")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.setattr("sys.argv", [
+            "geo_benchmark.py", "https://example.com", "--n", "20", "--save",
+        ])
+        monkeypatch.setattr("geo_benchmark.fetch_headings", lambda url, timeout=15: [("h2", f"H{i}") for i in range(20)])
+        monkeypatch.setattr("geo_benchmark.run_benchmark", lambda **kw: {
+            "results": [
+                {"query": f"How to H{i}?", "cited": True, "engines_citing": ["perplexity"], "skipped": False}
+                for i in range(20)
+            ],
+            "skipped_count": 0,
+            "engine_pair": "perplexity",
+        })
+        monkeypatch.setattr("geo_benchmark.os.path.expanduser", lambda p: p.replace("~/.seo-geo-history/", history_dir + "/"))
+
+        captured = []
+        original_print = print
+        def mock_print(*args, **kwargs):
+            if kwargs.get("file") is sys.stderr:
+                original_print(*args, **kwargs)
+            else:
+                captured.append(" ".join(str(a) for a in args))
+        monkeypatch.setattr("builtins.print", mock_print)
+
+        geo_benchmark.main()
+        full_output = "\n".join(captured)
+        assert "Previous run:" in full_output
+        assert "not statistically significant" not in full_output
