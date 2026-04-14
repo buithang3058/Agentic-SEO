@@ -159,6 +159,7 @@ def query_engine_with_retry(api_fn, query: str, delay: float = 1.0):
             if attempt == 0:
                 time.sleep(delay)
             else:
+                print(f"Warning: API call failed after retry: {e}", file=sys.stderr)
                 return None
     return None
 
@@ -660,6 +661,10 @@ def main():
                 delta_lines.append(f"This run: {timestamp[:10]} -> Score: {curr_score:.0f}/100 ({delta_sign}{delta:.0f} points)")
                 if abs(delta) < score_data["margin_of_error"]:
                     delta_lines.append(f"Note: delta ({delta_sign}{delta:.0f}) is within margin of error (±{score_data['margin_of_error']:.0f}) — not statistically significant")
+                prev_engine_pair = previous.get("engine_pair", "")
+                curr_engine_pair = benchmark["engine_pair"]
+                if prev_engine_pair and prev_engine_pair != curr_engine_pair:
+                    delta_lines.append(f"Note: engine_pair changed ({prev_engine_pair} -> {curr_engine_pair}) — delta may reflect engine change, not citation improvement")
         except Exception as e:
             print(f"Warning: could not save history: {e}", file=sys.stderr)
 

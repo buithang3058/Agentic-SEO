@@ -45,3 +45,20 @@ Recommend: append section mới ở cuối, backward-compatible.
 
 **Effort:** S (team ~2h / CC ~10min) | **Priority:** P2
 **Depends on:** Phase 2 shipped
+
+---
+
+### TODO-3: Improve --generate-with-llm to use page content
+
+**What:** In `generate_questions_with_llm()`, fetch the page content first (reuse `fetch_headings` or a plain text extract), then pass it to the LLM alongside the URL. Currently the LLM receives only the URL string and has to guess site topic coverage.
+
+**Why:** `--generate-with-llm` is supposed to produce higher-quality questions than heading parsing. But heading parsing reads the actual page — the LLM-based path doesn't. A benchmark on `https://stripe.com` gets generic "payment" questions, not questions about specific Stripe features. Better input = better benchmark quality.
+
+**Pros:** Makes `--generate-with-llm` actually better than heading parse as intended.
+
+**Cons:** Adds one HTTP fetch before the LLM call. For long pages, need to truncate content passed to LLM (e.g., first 3000 chars of visible text). Minor API cost increase.
+
+**Context:** Found in Phase 2 eng review (2026-04-14) via outside voice review.
+
+**Effort:** S (team ~1h / CC ~10min) | **Priority:** P3
+**Depends on:** Phase 2 shipped

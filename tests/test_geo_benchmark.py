@@ -650,10 +650,12 @@ class TestDeltaMOE:
     No note when delta exceeds MOE.
     """
 
-    def _make_history_file(self, history_dir, domain_slug, score, timestamp="2026-04-07-000000"):
+    def _make_history_file(self, history_dir, domain_slug, score, timestamp="2026-04-07-000000", engine_pair=None):
         os.makedirs(history_dir, exist_ok=True)
         path = os.path.join(history_dir, f"{domain_slug}-{timestamp}.json")
         data = {"domain": domain_slug, "score": score, "timestamp": "2026-04-07T00:00:00Z", "n": 20, "margin_of_error": 21.91}
+        if engine_pair is not None:
+            data["engine_pair"] = engine_pair
         with open(path, "w") as f:
             json.dump(data, f)
         return path
@@ -770,3 +772,192 @@ class TestDeltaMOE:
         full_output = "\n".join(captured)
         assert "Previous run:" in full_output
         assert "not statistically significant" not in full_output
+
+    def test_engine_pair_mismatch_shows_warning(self, tmp_path, monkeypatch):
+        """When engine_pair changes between runs, a note must be shown so delta is not misread."""
+        import geo_benchmark
+        history_dir = str(tmp_path / "hist")
+        # Previous run was Perplexity-only
+        self._make_history_file(history_dir, "example.com", score=40.0, engine_pair="perplexity")
+
+        monkeypatch.setenv("PERPLEXITY_API_KEY", "fake")
+        monkeypatch.setenv("OPENAI_API_KEY", "fake_openai")  # now dual-engine
+        monkeypatch.setattr("sys.argv", [
+            "geo_benchmark.py", "https://example.com", "--n", "20", "--save",
+        ])
+        monkeypatch.setattr("geo_benchmark.fetch_headings", lambda url, timeout=15: [("h2", f"H{i}") for i in range(20)])
+        monkeypatch.setattr("geo_benchmark.run_benchmark", lambda **kw: {
+            "results": [
+                {"query": f"How to H{i}?", "cited": True, "engines_citing": ["perplexity", "openai"], "skipped": False}
+                for i in range(20)
+            ],
+            "skipped_count": 0,
+            "engine_pair": "perplexity+openai",
+        })
+        monkeypatch.setattr("geo_benchmark.os.path.expanduser", lambda p: p.replace("~/.seo-geo-history/", history_dir + "/"))
+
+        captured = []
+        original_print = print
+        def mock_print(*args, **kwargs):
+            if kwargs.get("file") is sys.stderr:
+                original_print(*args, **kwargs)
+            else:
+                captured.append(" ".join(str(a) for a in args))
+        monkeypatch.setattr("builtins.print", mock_print)
+
+        geo_benchmark.main()
+        full_output = "\n".join(captured)
+        assert "engine_pair changed" in full_output
+        assert "perplexity" in full_output
+        assert "perplexity+openai" in full_output
+
+
+# ---------------------------------------------------------------------------
+# 13. headings_to_questions — primary question generation path
+# ---------------------------------------------------------------------------
+
+class TestHeadingsToQuestions:
+    """
+    headings_to_questions() is the primary question generation path.
+    H1/H2 → "How to...?", H3 → "What is...?"
+    Filler headings (HEADING_FILLER_BLOCKLIST) are skipped.
+    Trailing ?. is stripped before formatting.
+    """
+
+    def test_h1_becomes_how_to(self):
+        from geo_benchmark import headings_to_questions
+        result = headings_to_questions([("h1", "Improve SEO")])
+        assert result == ["How to Improve SEO?"]
+
+    def test_h2_becomes_how_to(self):
+        from geo_benchmark import headings_to_questions
+        result = headings_to_questions([("h2", "Build Links")])
+        assert result == ["How to Build Links?"]
+
+    def test_h3_becomes_what_is(self):
+        from geo_benchmark import headings_to_questions
+        result = headings_to_questions([("h3", "Core Web Vitals")])
+        result = headings_to_questions([("h3", "Core Web Vitals")])
+        assert result == ["What is Core Web Vitals?"]
+
+    def test_filler_heading_skipped(self):
+        """Headings in HEADING_FILLER_BLOCKLIST must be excluded."""
+        from geo_benchmark import headings_to_questions
+        for filler in ["Introduction", "FAQ", "Overview", "Conclusion", "Summary"]:
+            assert headings_to_questions([("h2", filler)]) == [], f"Expected {filler!r} to be filtered"
+
+    def test_trailing_punctuation_stripped(self):
+        """Trailing ? and . in heading text must be stripped before formatting."""
+        from geo_benchmark import headings_to_questions
+        result = headings_to_questions([("h2", "Improve SEO.")])
+        assert result == ["How to Improve SEO?"]
+        result = headings_to_questions([("h2", "Improve SEO?")])
+        assert result == ["How to Improve SEO?"]
+
+    def test_mixed_headings(self):
+        """Mix of H1, H2, H3, and filler in one call."""
+        from geo_benchmark import headings_to_questions
+        headings = [
+            ("h1", "Improve SEO"),
+            ("h2", "Introduction"),   # filler — skipped
+            ("h3", "E-E-A-T"),
+            ("h2", "Build Links"),
+        ]
+        result = headings_to_questions(headings)
+        assert result == [
+            "How to Improve SEO?",
+            "What is E-E-A-T?",
+            "How to Build Links?",
+        ]
+
+
+# ---------------------------------------------------------------------------
+# 14. generate_questions_with_llm — LLM-based question generation path
+# ---------------------------------------------------------------------------
+
+class TestGenerateQuestionsWithLLM:
+    """
+    generate_questions_with_llm() calls GPT-4o-mini, strips markdown fences,
+    parses JSON. Any failure returns [] (fallback to heading parse).
+    """
+
+    def test_happy_path_returns_questions(self, monkeypatch):
+        """Clean JSON array returned by LLM is parsed correctly."""
+        import geo_benchmark
+        from unittest.mock import Mock
+        mock_resp = Mock()
+        mock_resp.raise_for_status = Mock()
+        mock_resp.json.return_value = {
+            "choices": [{"message": {"content": '["What is SEO?", "How to build links?"]'}}]
+        }
+        monkeypatch.setattr("geo_benchmark.requests.post", lambda *a, **kw: mock_resp)
+        result = geo_benchmark.generate_questions_with_llm("https://example.com", "fake_key", 2)
+        assert result == ["What is SEO?", "How to build links?"]
+
+    def test_markdown_fence_stripped(self, monkeypatch):
+        """LLM response wrapped in ```json ... ``` fences is unwrapped correctly."""
+        import geo_benchmark
+        from unittest.mock import Mock
+        mock_resp = Mock()
+        mock_resp.raise_for_status = Mock()
+        mock_resp.json.return_value = {
+            "choices": [{"message": {"content": '```json\n["What is SEO?"]\n```'}}]
+        }
+        monkeypatch.setattr("geo_benchmark.requests.post", lambda *a, **kw: mock_resp)
+        result = geo_benchmark.generate_questions_with_llm("https://example.com", "fake_key", 1)
+        assert result == ["What is SEO?"]
+
+    def test_exception_returns_empty_list(self, monkeypatch):
+        """Any exception (timeout, bad JSON, auth error) returns [] for graceful fallback."""
+        import geo_benchmark
+        def raise_timeout(*args, **kwargs):
+            raise TimeoutError("connection timeout")
+        monkeypatch.setattr("geo_benchmark.requests.post", raise_timeout)
+        result = geo_benchmark.generate_questions_with_llm("https://example.com", "fake_key", 5)
+        assert result == []
+
+
+# ---------------------------------------------------------------------------
+# 15. format_text_report — reliability warning + recommendation tiers
+# ---------------------------------------------------------------------------
+
+class TestFormatTextReportEdgeCases:
+    """
+    format_text_report() shows a WARNING prefix when reliable=False.
+    Recommendation tiers: <20 → llms.txt + FAQ, <50 → expand + schema, >=50 → maintain.
+    """
+
+    def test_unreliable_score_shows_warning(self):
+        """When reliable=False, the report must include a WARNING line."""
+        from geo_benchmark import format_text_report, compute_score
+        results = [{"cited": False}]
+        score_data = compute_score(results)
+        benchmark = {"results": [{"query": "q1", "cited": False, "engines_citing": [], "skipped": False}],
+                     "skipped_count": 0, "engine_pair": "perplexity"}
+        sufficiency = {"reliable": False, "message": "Insufficient data, score unreliable: 11/20 questions skipped"}
+        report = format_text_report("example.com", score_data, benchmark, sufficiency)
+        assert "WARNING:" in report
+        assert "Insufficient data" in report
+
+    def test_score_below_20_recommends_llmstxt_and_faq(self):
+        """Score < 20 → recommend llms.txt + FAQ + crawler access."""
+        from geo_benchmark import format_text_report, compute_score
+        results = [{"cited": False}] * 10
+        score_data = compute_score(results)
+        benchmark = {"results": [{"query": f"q{i}", "cited": False, "engines_citing": [], "skipped": False} for i in range(10)],
+                     "skipped_count": 0, "engine_pair": "perplexity"}
+        sufficiency = {"reliable": True, "message": ""}
+        report = format_text_report("example.com", score_data, benchmark, sufficiency)
+        assert "llms.txt" in report
+        assert "FAQ" in report
+
+    def test_score_50_or_above_recommends_maintenance(self):
+        """Score >= 50 → recommend maintaining content freshness."""
+        from geo_benchmark import format_text_report, compute_score
+        results = [{"cited": True}] * 10
+        score_data = compute_score(results)
+        benchmark = {"results": [{"query": f"q{i}", "cited": True, "engines_citing": ["perplexity"], "skipped": False} for i in range(10)],
+                     "skipped_count": 0, "engine_pair": "perplexity"}
+        sufficiency = {"reliable": True, "message": ""}
+        report = format_text_report("example.com", score_data, benchmark, sufficiency)
+        assert "Strong citation rate" in report
