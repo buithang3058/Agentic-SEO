@@ -121,8 +121,7 @@ def compute_score(results: list) -> dict:
     p = cited_count / n
     score = round(p * 100, 2)
 
-    # 95% confidence interval for a proportion (Wilson or normal approximation)
-    # Normal approximation: MOE = 1.96 * sqrt(p*(1-p)/n) * 100
+    # 95% confidence interval — normal approximation: MOE = 1.96 * sqrt(p*(1-p)/n) * 100
     # At p=0 or p=1, MOE=0 (exact). For small N this is approximate.
     if n > 1:
         moe = 1.96 * math.sqrt(p * (1 - p) / n) * 100
