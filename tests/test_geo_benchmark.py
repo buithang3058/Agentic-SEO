@@ -885,36 +885,135 @@ class TestGenerateQuestionsWithLLM:
         """Clean JSON array returned by LLM is parsed correctly."""
         import geo_benchmark
         from unittest.mock import Mock
-        mock_resp = Mock()
-        mock_resp.raise_for_status = Mock()
-        mock_resp.json.return_value = {
+        mock_get = Mock()
+        mock_get.raise_for_status = Mock()
+        mock_get.text = "<html><body><h1>SEO Guide</h1></body></html>"
+        mock_post = Mock()
+        mock_post.raise_for_status = Mock()
+        mock_post.json.return_value = {
             "choices": [{"message": {"content": '["What is SEO?", "How to build links?"]'}}]
         }
-        monkeypatch.setattr("geo_benchmark.requests.post", lambda *a, **kw: mock_resp)
+        monkeypatch.setattr("geo_benchmark.requests.get", lambda *a, **kw: mock_get)
+        monkeypatch.setattr("geo_benchmark.requests.post", lambda *a, **kw: mock_post)
         result = geo_benchmark.generate_questions_with_llm("https://example.com", "fake_key", 2)
         assert result == ["What is SEO?", "How to build links?"]
+
+    def test_page_content_passed_to_llm(self, monkeypatch):
+        """Page content is fetched and included in the LLM prompt."""
+        import geo_benchmark
+        from unittest.mock import Mock
+        captured = {}
+        mock_get = Mock()
+        mock_get.raise_for_status = Mock()
+        mock_get.text = "<html><body><h1>Stripe Payments API</h1><p>Accept payments globally.</p></body></html>"
+        mock_post = Mock()
+        mock_post.raise_for_status = Mock()
+        mock_post.json.return_value = {
+            "choices": [{"message": {"content": '["How does Stripe Payments API work?"]'}}]
+        }
+        def capture_post(*args, **kwargs):
+            captured["body"] = kwargs.get("json", {})
+            return mock_post
+        monkeypatch.setattr("geo_benchmark.requests.get", lambda *a, **kw: mock_get)
+        monkeypatch.setattr("geo_benchmark.requests.post", capture_post)
+        geo_benchmark.generate_questions_with_llm("https://stripe.com", "fake_key", 1)
+        user_msg = captured["body"]["messages"][1]["content"]
+        assert "Stripe Payments API" in user_msg
+        assert "Page content" in user_msg
+
+    def test_fetch_failure_falls_back_to_url_only(self, monkeypatch):
+        """If page fetch fails, LLM still runs with URL-only prompt (no crash)."""
+        import geo_benchmark
+        from unittest.mock import Mock
+        captured = {}
+        def raise_on_get(*args, **kwargs):
+            raise ConnectionError("timeout")
+        mock_post = Mock()
+        mock_post.raise_for_status = Mock()
+        mock_post.json.return_value = {
+            "choices": [{"message": {"content": '["What is SEO?"]'}}]
+        }
+        def capture_post(*args, **kwargs):
+            captured["body"] = kwargs.get("json", {})
+            return mock_post
+        monkeypatch.setattr("geo_benchmark.requests.get", raise_on_get)
+        monkeypatch.setattr("geo_benchmark.requests.post", capture_post)
+        result = geo_benchmark.generate_questions_with_llm("https://example.com", "fake_key", 1)
+        assert result == ["What is SEO?"]
+        user_msg = captured["body"]["messages"][1]["content"]
+        assert "Page content" not in user_msg
 
     def test_markdown_fence_stripped(self, monkeypatch):
         """LLM response wrapped in ```json ... ``` fences is unwrapped correctly."""
         import geo_benchmark
         from unittest.mock import Mock
-        mock_resp = Mock()
-        mock_resp.raise_for_status = Mock()
-        mock_resp.json.return_value = {
+        mock_get = Mock()
+        mock_get.raise_for_status = Mock()
+        mock_get.text = "<html><body><p>content</p></body></html>"
+        mock_post = Mock()
+        mock_post.raise_for_status = Mock()
+        mock_post.json.return_value = {
             "choices": [{"message": {"content": '```json\n["What is SEO?"]\n```'}}]
         }
-        monkeypatch.setattr("geo_benchmark.requests.post", lambda *a, **kw: mock_resp)
+        monkeypatch.setattr("geo_benchmark.requests.get", lambda *a, **kw: mock_get)
+        monkeypatch.setattr("geo_benchmark.requests.post", lambda *a, **kw: mock_post)
         result = geo_benchmark.generate_questions_with_llm("https://example.com", "fake_key", 1)
         assert result == ["What is SEO?"]
 
     def test_exception_returns_empty_list(self, monkeypatch):
         """Any exception (timeout, bad JSON, auth error) returns [] for graceful fallback."""
         import geo_benchmark
+        from unittest.mock import Mock
+        mock_get = Mock()
+        mock_get.raise_for_status = Mock()
+        mock_get.text = "<html><body></body></html>"
         def raise_timeout(*args, **kwargs):
             raise TimeoutError("connection timeout")
+        monkeypatch.setattr("geo_benchmark.requests.get", lambda *a, **kw: mock_get)
         monkeypatch.setattr("geo_benchmark.requests.post", raise_timeout)
         result = geo_benchmark.generate_questions_with_llm("https://example.com", "fake_key", 5)
         assert result == []
+
+
+class TestFetchPageText:
+    """Tests for fetch_page_text helper."""
+
+    def test_returns_visible_text(self, monkeypatch):
+        """Extracts text from body, strips scripts and styles."""
+        import geo_benchmark
+        from unittest.mock import Mock
+        mock_resp = Mock()
+        mock_resp.raise_for_status = Mock()
+        mock_resp.text = (
+            "<html><head><style>body{margin:0}</style></head>"
+            "<body><script>alert(1)</script><h1>SEO Guide</h1><p>Learn SEO.</p></body></html>"
+        )
+        monkeypatch.setattr("geo_benchmark.requests.get", lambda *a, **kw: mock_resp)
+        text = geo_benchmark.fetch_page_text("https://example.com")
+        assert "SEO Guide" in text
+        assert "Learn SEO" in text
+        assert "alert" not in text
+        assert "margin" not in text
+
+    def test_truncates_to_max_chars(self, monkeypatch):
+        """Output is capped at max_chars."""
+        import geo_benchmark
+        from unittest.mock import Mock
+        mock_resp = Mock()
+        mock_resp.raise_for_status = Mock()
+        mock_resp.text = f"<html><body><p>{'x' * 5000}</p></body></html>"
+        monkeypatch.setattr("geo_benchmark.requests.get", lambda *a, **kw: mock_resp)
+        text = geo_benchmark.fetch_page_text("https://example.com", max_chars=100)
+        assert len(text) <= 100
+
+    def test_returns_empty_on_fetch_failure(self, monkeypatch):
+        """Returns empty string if page fetch fails (no exception raised)."""
+        import geo_benchmark
+        def raise_err(*args, **kwargs):
+            raise ConnectionError("timeout")
+        monkeypatch.setattr("geo_benchmark.requests.get", raise_err)
+        text = geo_benchmark.fetch_page_text("https://example.com")
+        assert text == ""
 
 
 # ---------------------------------------------------------------------------

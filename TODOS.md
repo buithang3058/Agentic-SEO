@@ -41,7 +41,15 @@ Recommend: append section mới ở cuối, backward-compatible.
 
 ---
 
-### TODO-3: Improve --generate-with-llm to use page content
+### ~~TODO-3: Improve --generate-with-llm to use page content~~ DONE
+
+**Shipped:** Added `fetch_page_text()` helper — fetches page, strips scripts/styles/nav/footer,
+truncates to 3000 chars. `generate_questions_with_llm()` now passes page content to LLM.
+Falls back to URL-only if fetch fails. 5 new tests added (70 total).
+
+---
+
+### TODO-3 (archived):
 
 **What:** In `generate_questions_with_llm()`, fetch the page content first (reuse `fetch_headings` or a plain text extract), then pass it to the LLM alongside the URL. Currently the LLM receives only the URL string and has to guess site topic coverage.
 

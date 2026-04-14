@@ -243,12 +243,47 @@ def headings_to_questions(headings: list) -> list:
     return questions
 
 
+def fetch_page_text(url: str, max_chars: int = 3000, timeout: int = 15) -> str:
+    """
+    Fetch a page and return visible text (scripts/styles stripped), truncated to max_chars.
+    Returns empty string on failure — caller decides whether to proceed without content.
+    """
+    try:
+        resp = requests.get(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (compatible; SEOAgentic/1.0; +https://github.com/buithang/seo-agentic)"},
+            timeout=timeout,
+        )
+        resp.raise_for_status()
+    except Exception:
+        return ""
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    for tag in soup(["script", "style", "nav", "footer", "head"]):
+        tag.decompose()
+    text = soup.get_text(separator=" ", strip=True)
+    # Collapse whitespace
+    text = " ".join(text.split())
+    return text[:max_chars]
+
+
 def generate_questions_with_llm(url: str, openai_key: str, n: int) -> list:
     """
     Generate benchmark questions using OpenAI Chat Completions (not web search).
     Only called when --generate-with-llm is passed AND openai_key is available.
     Uses a separate model call, NOT the benchmarking engine, to avoid bias.
+    Fetches page content first so the LLM generates topic-specific questions.
     """
+    page_text = fetch_page_text(url)
+    if page_text:
+        user_content = (
+            f"Website URL: {url}\n\n"
+            f"Page content (first 3000 chars):\n{page_text}\n\n"
+            f"Generate {n} search queries."
+        )
+    else:
+        user_content = f"Website URL: {url}\n\nGenerate {n} search queries."
+
     try:
         resp = requests.post(
             "https://api.openai.com/v1/chat/completions",
@@ -266,7 +301,7 @@ def generate_questions_with_llm(url: str, openai_key: str, n: int) -> list:
                     },
                     {
                         "role": "user",
-                        "content": f"Website URL: {url}\n\nGenerate {n} search queries.",
+                        "content": user_content,
                     },
                 ],
                 "temperature": 0.7,
