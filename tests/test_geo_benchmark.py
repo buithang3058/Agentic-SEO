@@ -961,3 +961,43 @@ class TestFormatTextReportEdgeCases:
         sufficiency = {"reliable": True, "message": ""}
         report = format_text_report("example.com", score_data, benchmark, sufficiency)
         assert "Strong citation rate" in report
+
+
+class TestComparisonTable:
+    """Tests for _format_comparison_table."""
+
+    def test_shows_all_domains(self):
+        """Primary domain and all competitors appear in table."""
+        from geo_benchmark import _format_comparison_table
+        rows = [
+            {"domain": "competitor.com", "score": 60.0, "n": 20, "margin_of_error": 21.0},
+        ]
+        table = _format_comparison_table("example.com", {"score": 45.0, "n": 20, "margin_of_error": 22.0}, rows)
+        assert "example.com (you)" in table
+        assert "competitor.com" in table
+
+    def test_gap_behind_shows_negative(self):
+        """When primary is behind top competitor, gap line shows negative."""
+        from geo_benchmark import _format_comparison_table
+        rows = [{"domain": "top.com", "score": 70.0, "n": 20, "margin_of_error": 20.0}]
+        table = _format_comparison_table("example.com", {"score": 40.0, "n": 20, "margin_of_error": 22.0}, rows)
+        assert "behind top.com" in table
+        assert "-30" in table
+
+    def test_gap_ahead_shows_positive(self):
+        """When primary is ahead, gap line shows positive."""
+        from geo_benchmark import _format_comparison_table
+        rows = [{"domain": "slow.com", "score": 20.0, "n": 20, "margin_of_error": 18.0}]
+        table = _format_comparison_table("example.com", {"score": 55.0, "n": 20, "margin_of_error": 22.0}, rows)
+        assert "ahead of slow.com" in table
+        assert "+35" in table
+
+    def test_sorted_by_score_descending(self):
+        """Table rows appear sorted highest score first."""
+        from geo_benchmark import _format_comparison_table
+        rows = [
+            {"domain": "low.com", "score": 20.0, "n": 20, "margin_of_error": 18.0},
+            {"domain": "high.com", "score": 80.0, "n": 20, "margin_of_error": 18.0},
+        ]
+        table = _format_comparison_table("example.com", {"score": 50.0, "n": 20, "margin_of_error": 22.0}, rows)
+        assert table.index("high.com") < table.index("low.com")

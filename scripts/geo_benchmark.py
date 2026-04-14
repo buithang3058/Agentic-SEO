@@ -481,6 +481,55 @@ def format_text_report(domain: str, score_data: dict, benchmark: dict, sufficien
 
 
 # ---------------------------------------------------------------------------
+# Competitor comparison table
+# ---------------------------------------------------------------------------
+
+def _format_comparison_table(primary_domain: str, primary_score: dict, competitor_rows: list) -> str:
+    """
+    Render a GEO Score comparison table.
+
+    primary_score: dict with score, n, margin_of_error
+    competitor_rows: list of {domain, score, n, margin_of_error}
+    """
+    all_rows = [
+        {"domain": f"{primary_domain} (you)", "score": primary_score["score"],
+         "n": primary_score["n"], "moe": primary_score["margin_of_error"]},
+        *[{"domain": r["domain"], "score": r["score"], "n": r["n"], "moe": r["margin_of_error"]}
+          for r in competitor_rows],
+    ]
+
+    # Column widths
+    max_domain = max(len(r["domain"]) for r in all_rows)
+    col_domain = max(max_domain, 6)  # min width for "Domain"
+
+    lines = ["", "## GEO Score Comparison", ""]
+    header = f"  {'Domain':<{col_domain}}  {'Score':>7}  {'MOE':>5}  {'N':>4}"
+    lines.append(header)
+    lines.append("  " + "-" * (col_domain + 22))
+
+    all_rows_sorted = sorted(all_rows, key=lambda r: r["score"], reverse=True)
+    for row in all_rows_sorted:
+        lines.append(
+            f"  {row['domain']:<{col_domain}}  {row['score']:>5.0f}/100  ±{row['moe']:>3.0f}%  {row['n']:>4}"
+        )
+
+    # Gap vs top competitor
+    comp_scores = [r["score"] for r in competitor_rows]
+    if comp_scores:
+        best_comp = max(competitor_rows, key=lambda r: r["score"])
+        gap = primary_score["score"] - best_comp["score"]
+        lines.append("")
+        if gap > 0:
+            lines.append(f"  Gap vs top competitor: +{gap:.0f} points ahead of {best_comp['domain']}")
+        elif gap < 0:
+            lines.append(f"  Gap vs top competitor: {gap:.0f} points behind {best_comp['domain']}")
+        else:
+            lines.append(f"  Tied with top competitor: {best_comp['domain']}")
+
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -504,6 +553,8 @@ def main():
                         help="Parallel API workers (default: 5)")
     parser.add_argument("--save", action="store_true",
                         help="Save results to ~/.seo-geo-history/ and show delta from previous run")
+    parser.add_argument("--competitors", metavar="DOMAINS",
+                        help="Comma-separated competitor domains to compare (e.g., competitor1.com,competitor2.com)")
 
     args = parser.parse_args()
 
@@ -623,6 +674,38 @@ def main():
     if not sufficiency["reliable"]:
         output["warning"] = sufficiency["message"]
 
+    # Competitor benchmarks (same questions, different domain)
+    competitor_rows = []  # [{domain, score, margin_of_error, n}]
+    if args.competitors:
+        raw_competitors = [c.strip() for c in args.competitors.split(",") if c.strip()]
+        for raw in raw_competitors:
+            comp_url = raw if raw.startswith(("http://", "https://")) else "https://" + raw
+            comp_domain = extract_domain(comp_url)
+            print(f"Benchmarking competitor: {comp_domain}", file=sys.stderr)
+            comp_benchmark = run_benchmark(
+                questions=questions,
+                domain=comp_domain,
+                perplexity_key=perplexity_key,
+                openai_key=openai_key or None,
+                max_workers=args.workers,
+            )
+            comp_answered = [r for r in comp_benchmark["results"] if not r.get("skipped")]
+            if comp_answered:
+                comp_score = compute_score(comp_answered)
+            else:
+                comp_score = {"score": 0.0, "n": 0, "margin_of_error": 0.0}
+            competitor_rows.append({
+                "domain": comp_domain,
+                "score": comp_score["score"],
+                "n": comp_score["n"],
+                "margin_of_error": comp_score["margin_of_error"],
+            })
+        output["domains"] = [
+            {"domain": domain, "score": score_data["score"], "n": score_data["n"],
+             "margin_of_error": score_data["margin_of_error"], "primary": True},
+            *[{**row, "primary": False} for row in competitor_rows],
+        ]
+
     # Output
     if args.output:
         with open(args.output, "w", encoding="utf-8") as f:
@@ -672,6 +755,8 @@ def main():
             print(json.dumps(output, indent=2, ensure_ascii=False))
     else:
         report = format_text_report(domain, score_data, benchmark, sufficiency)
+        if competitor_rows:
+            report += _format_comparison_table(domain, score_data, competitor_rows)
         if delta_lines:
             report += "\n" + "\n".join(delta_lines)
         print(report)

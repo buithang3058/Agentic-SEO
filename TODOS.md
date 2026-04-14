@@ -2,26 +2,11 @@
 
 ## P2 — After Phase 2 (GEO Score Integration) is shipped
 
-### TODO-1: Competitor GEO Benchmark
+### ~~TODO-1: Competitor GEO Benchmark~~ DONE
 
-**What:** Thêm flag `--competitors domain1.com,domain2.com` vào `geo_benchmark.py`.
-Chạy cùng bộ câu hỏi trên tất cả domains. Output bảng so sánh GEO Score.
-
-**Why:** Câu hỏi thực tế nhất là "tôi đang thắng hay thua đối thủ trong AI search?"
-Absolute GEO Score không có ý nghĩa nếu không có context.
-
-**Pros:** Metric có ngữ cảnh. Tìm được gap cụ thể — câu nào competitor được cite mà mình không.
-
-**Cons:** Cần validate metric của chính site mình trước khi so sánh. Competitor list từ user.
-
-**Context:** Deferred from Phase 2 CEO review (2026-04-14). Phase 2 phải ship trước để
-validate metric. Competitor benchmark là Phase 2.5.
-
-**Effort:** S (team ~3h / CC ~15min) | **Priority:** P2
-**Depends on:** Phase 2 shipped + metric validated qua ít nhất 2-3 lần chạy thực
-
-**Start:** `geo_benchmark.py`, thêm `--competitors` flag sau `--url`. Chạy `run_benchmark()`
-cho mỗi domain với cùng bộ câu hỏi sinh từ primary URL. Output JSON có `domains[]` array.
+**Shipped:** `--competitors domain1.com,domain2.com` flag in `geo_benchmark.py`.
+Runs same questions against all domains, outputs comparison table with gap analysis.
+JSON output includes `domains[]` array. 4 new tests added (65 total).
 
 ---
 
