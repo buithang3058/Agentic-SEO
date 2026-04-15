@@ -31,6 +31,7 @@ For prompt reliability in Codex/agent IDEs, map common user wording to a fixed w
 | `seo page <url>` | [seo-page](resources/skills/seo-page.md) | Deep single-page analysis |
 | `seo technical <url>` | [seo-technical](resources/skills/seo-technical.md) | Technical SEO checks |
 | `content audit <url>` | [content-audit](resources/skills/content-audit.md) | Content quality & E-E-A-T |
+| `write content <topic>` | [content-writer](resources/skills/content-writer.md) | SEO content in your writing voice |
 | `seo schema <url>` | [seo-schema](resources/skills/seo-schema.md) | Schema detection/validation/generation |
 | `seo sitemap <url>` | [seo-sitemap](resources/skills/seo-sitemap.md) | Sitemap analysis & generation |
 | `seo images <url>` | [seo-images](resources/skills/seo-images.md) | Image optimization audit |
