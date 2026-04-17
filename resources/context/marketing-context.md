@@ -46,7 +46,7 @@
 
 ---
 
-## Writing Instructions cho AI Skills
+## Writing Instructions for AI Skills
 
 <!-- Đây là phần các skills (content-writer, seo, marketing) đọc khi viết -->
 

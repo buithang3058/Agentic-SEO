@@ -5,109 +5,109 @@
 
 ## Who I am
 
-[Mô tả bản thân ngắn gọn: lĩnh vực, góc nhìn, điều khiến bạn khác biệt]
+[Brief description: field/domain, perspective, what makes you different]
 
-Câu đo lường duy nhất: *"[Câu hỏi bạn dùng để kiểm tra bài viết đạt chuẩn]"*
+Single measure: *"[The question you use to check whether an article meets your standard]"*
 
 ---
 
 ## How I sound — examples
 
 ### Hook
-**CÓ:**
-> "[Ví dụ mở bài đạt chuẩn]"
+**GOOD:**
+> "[Example of a strong opening]"
 
-*Tại sao hoạt động: [giải thích ngắn]*
+*Why it works: [short explanation]*
 
 ### Body section
-**CÓ:**
-> "[Ví dụ đoạn thân bài đạt chuẩn]"
+**GOOD:**
+> "[Example of a strong body paragraph]"
 
-*Tại sao hoạt động: [giải thích ngắn]*
+*Why it works: [short explanation]*
 
 ### Risk disclosure
-**CÓ:**
-> "[Ví dụ disclaimer đạt chuẩn]"
+**GOOD:**
+> "[Example of a strong disclaimer]"
 
-*Tại sao hoạt động: [giải thích ngắn]*
+*Why it works: [short explanation]*
 
 ---
 
 ## Signature Phrases & Structures
 
-- **"[Cụm từ đặc trưng]"** — [khi nào dùng]
-- **"[Cụm từ đặc trưng]"** — [khi nào dùng]
+- **"[Recurring phrase]"** — [when to use]
+- **"[Recurring phrase]"** — [when to use]
 
 ---
 
 ## Hard stops
 
-1. [Rule tuyệt đối #1]
-2. [Rule tuyệt đối #2]
-3. [Rule tuyệt đối #3]
+1. [Absolute rule #1]
+2. [Absolute rule #2]
+3. [Absolute rule #3]
 
 ---
 
 ## Never (HARD RULES)
 
-- [Điều tuyệt đối không làm]
-- [Điều tuyệt đối không làm]
+- [Thing you never do]
+- [Thing you never do]
 
 ---
 
 ## Writing Mechanics
 
-**Độ dài:**
-- [Dạng bài ngắn]: [X từ]
-- [Dạng bài dài]: [X từ]
+**Length:**
+- [Short form]: [X words]
+- [Long form]: [X words]
 
-**Cấu trúc:**
-- [Mô tả cấu trúc thông thường]
+**Structure:**
+- [Describe your typical structure]
 
 **Format:**
-- Bold: [quy tắc dùng bold]
+- Bold: [when and how you use bold]
 
 ---
 
 ## Thinking pattern variants
 
-### Pattern A: [Tên]
-Dùng khi: [loại bài]
-[Mô tả flow]
+### Pattern A: [Name]
+Use when: [article type]
+[Describe the flow]
 
-### Pattern B: [Tên]
-Dùng khi: [loại bài]
-[Mô tả flow]
+### Pattern B: [Name]
+Use when: [article type]
+[Describe the flow]
 
-### Pattern C: [Tên]
-Dùng khi: [loại bài]
-[Mô tả flow]
+### Pattern C: [Name]
+Use when: [article type]
+[Describe the flow]
 
 ---
 
 ## Pattern selection guide
 
-| Tiêu đề bài | Pattern đúng |
+| Article title | Right pattern |
 |---|---|
-| "[Topic] là gì?" | B |
-| "Tôi đã [thử/thất bại] với [topic]" | A |
-| "Cách [làm gì đó]" | C |
+| "What is [topic]?" | B |
+| "I tried/failed at [topic]" | A |
+| "How to [do something]" | C |
 
 ---
 
 ## Frequency guide
 
-**HARD RULE:** xem section "Never" bên trên
+**HARD RULE:** see "Never" section above
 
 **STRONG TENDENCY (70-80%):**
 - [Habit #1]
 - [Habit #2]
 
 **LIGHT PREFERENCE:**
-- [Tùy context #1]
-- [Tùy context #2]
+- [Context-dependent #1]
+- [Context-dependent #2]
 
 ---
 
-*Tạo từ template: writing-dna.template.md*
-*Cập nhật: [YYYY-MM-DD] — v1.0*
+*Created from template: writing-dna.template.md*
+*Updated: [YYYY-MM-DD] — v1.0*
