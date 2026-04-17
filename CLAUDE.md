@@ -1,9 +1,25 @@
 
-## Skill routing
+## SEO Agentic commands
 
-When the user's request matches an available skill, ALWAYS invoke it using the Skill
-tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
-The skill has specialized workflows that produce better results than ad-hoc answers.
+These commands are handled by reading skill files directly — do NOT use the Skill tool for them.
+
+| User types | Read this file and follow its instructions |
+|-----------|-------------------------------------------|
+| `project list` / `project switch` / `project new` / `project status` | `resources/skills/seo-project.md` |
+| `write content <topic>` | `resources/skills/content-writer.md` |
+| `seo audit <url>` | `resources/skills/seo-audit.md` |
+| `seo page <url>` | `resources/skills/seo-page.md` |
+| `seo plan <url>` | `resources/skills/seo-plan.md` |
+| `seo geo <url>` | `resources/skills/seo-geo.md` |
+| `content audit <url>` | `resources/skills/content-audit.md` |
+| Any other `seo <sub-skill> <url>` | `resources/skills/seo-<sub-skill>.md` |
+
+If unsure which file to read, check the commands table in `SKILL.md`.
+
+## Skill routing (gstack — developer tools only)
+
+When the user's request matches a gstack developer skill, invoke it using the Skill
+tool as your FIRST action.
 
 Key routing rules:
 - Product ideas, "is this worth building", brainstorming → invoke office-hours
