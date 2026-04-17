@@ -837,7 +837,6 @@ class TestHeadingsToQuestions:
     def test_h3_becomes_what_is(self):
         from geo_benchmark import headings_to_questions
         result = headings_to_questions([("h3", "Core Web Vitals")])
-        result = headings_to_questions([("h3", "Core Web Vitals")])
         assert result == ["What is Core Web Vitals?"]
 
     def test_filler_heading_skipped(self):

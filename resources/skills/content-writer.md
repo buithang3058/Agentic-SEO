@@ -3,14 +3,17 @@ name: content-writer
 description: >
   SEO content writing in user's personal voice. Researches topic via web search
   and SERP analysis, generates outline for approval, then writes full article
-  following writing-dna. Use when user says "write content", "write article",
-  "viết bài", "viết content", or "content writer".
+  following writing-dna. After writing, reviews article and proposes DNA learnings.
+  Use when user says "write content", "write article", "viết bài", "viết content",
+  "content writer", or "merge dna".
 ---
 
 # Content Writer
 
-Writes SEO content in your personal voice. Two phases: research + outline approval,
-then writing. Requires `~/.seo-voices/bui-thang.md` (writing-dna file).
+Writes SEO content in your personal voice. Three phases: research + outline approval,
+writing, then DNA review. Requires `~/.seo-voices/<name>.md` (writing-dna file).
+
+Also handles: `merge dna` — merges accumulated learnings into your DNA file.
 
 ---
 
@@ -18,27 +21,23 @@ then writing. Requires `~/.seo-voices/bui-thang.md` (writing-dna file).
 
 **Step 1: Load writing-dna**
 
-Read `~/.seo-voices/bui-thang.md`. If file does not exist, halt immediately:
+Detect DNA file path: check `~/.seo-voices/` for `.md` files. Use the first one found.
+If no file exists, halt immediately:
 
 ```
-Writing-DNA file not found at ~/.seo-voices/bui-thang.md
-Please create it before running this skill.
+Writing-DNA file not found at ~/.seo-voices/
+Please create one from the template at resources/context/writing-dna.template.md
+and save it to ~/.seo-voices/<your-name>.md
 ```
 
 **Step 2: Collect inputs**
 
 Required:
 - **Topic**: chủ đề bài viết
-- **Context**: `diverFi` (cá nhân, thẳng, có thể thô) hoặc `Simplize` (chuyên gia, tiết chế, logic)
 
 Optional:
 - **Brief**: góc nhìn muốn thể hiện, target audience, experience cá nhân liên quan,
   word count target (default: 1200–2000 từ)
-
-If context is not provided, ask before continuing:
-```
-Context là gì? diverFi hay Simplize?
-```
 
 ---
 
@@ -55,7 +54,7 @@ Context là gì? diverFi hay Simplize?
 
 ### 1.2 Generate outline
 
-Using research findings + user brief + writing-dna "How I sound" examples for the given context:
+Using research findings + user brief + writing-dna "How I sound" examples:
 
 - **Angle**: 1–2 câu tóm tắt góc tiếp cận khác biệt so với SERP hiện tại
 - **Outline**: H2/H3 với 1-line mô tả stake của từng section
@@ -107,11 +106,9 @@ Wait for response.
 
 ### 2.2 Voice setup
 
-Đọc section **"Who I am"** trong writing-dna, lấy context-specific tone:
-- `diverFi` → cá nhân, thẳng, có thể thô. Sẵn sàng thừa nhận sai lầm.
-- `Simplize` → chuyên gia, tiết chế, logic. Tiết chế cảm xúc.
+Đọc section **"Who I am"** trong writing-dna để nắm giọng văn tổng thể.
 
-Đọc **"How I sound"** examples cho context đang dùng. Đây là pattern để viết —
+Đọc **"How I sound"** examples. Đây là pattern để viết —
 không phải nguồn sự kiện để trích dẫn.
 
 ### 2.3 Write the article
@@ -173,7 +170,6 @@ Tạo file tại `~/drafts/<slug>-draft.md`:
 ---
 title: [H1 title]
 keyword: [target keyword chính]
-context: [diverFi | Simplize]
 date: [YYYY-MM-DD]
 status: draft
 word_count: [approximate]
@@ -185,9 +181,153 @@ word_count: [approximate]
 Sau khi save, output:
 ```
 Saved: ~/drafts/<slug>-draft.md
+```
 
-Next step (optional):
+Tiếp tục ngay Phase 3: DNA Review.
+
+---
+
+## Phase 3: DNA Review
+
+Chạy tự động ngay sau khi file draft được save. Không hỏi user có muốn chạy không.
+
+### 3.1 Analyze article
+
+Đọc lại `~/drafts/<slug>-draft.md`. Phân tích theo 4 loại đề xuất:
+
+**Examples hay** — đoạn nào áp dụng tốt voice/hook/body/disclaimer pattern, chưa có
+trong DNA hoặc hay hơn example hiện tại.
+
+**Signature phrases mới** — cụm từ/cấu trúc câu đặc trưng xuất hiện trong bài
+mà chưa có trong DNA.
+
+**Pattern refinements** — Pattern A/B/C được dùng theo cách tinh tế hoặc khác so với
+mô tả hiện tại trong DNA.
+
+**Hard stops mới / exceptions** — rule mới xuất hiện, hoặc trường hợp ngoại lệ
+với rule hiện tại cần ghi nhớ.
+
+Nếu không có đề xuất nào (bài không có gì mới so với DNA): output
+`DNA review: nothing new — bài này không thêm pattern mới.` và dừng.
+
+### 3.2 Present proposals
+
+Với mỗi đề xuất, hiển thị theo format:
+
+```
+DNA Proposal #N — [Loại: Examples | Phrases | Pattern | Hard stop]
+
+"[excerpt hoặc phrase]"
+
+Lý do: [tại sao hay, tại sao quan trọng]
+
+Diff:
+  Section: [tên section trong DNA]
++ [dòng sẽ thêm]
+
+Lưu vào learnings? (y/n/edit)
+```
+
+- `y` hoặc `yes` → lưu đề xuất này
+- `n` hoặc `no` → bỏ qua
+- `edit [nội dung]` → dùng nội dung user nhập thay vì đề xuất gốc, sau đó lưu
+
+Hỏi từng đề xuất một. Không batch.
+
+### 3.3 Save approved learnings
+
+Các đề xuất được approve (kể cả `edit`) → append vào `~/drafts/writing-dna-learnings.md`:
+
+```markdown
+## [slug] — [YYYY-MM-DD]
+
+### Examples
+- "[excerpt]" ← [lý do ngắn]
+
+### Phrases
+- "[phrase]" — [khi nào dùng]
+
+### Pattern updates
+- Pattern [A/B/C]: [refinement]
+
+### Hard stops
+- [rule mới hoặc exception]
+```
+
+Chỉ ghi các section có nội dung. Bỏ section rỗng.
+
+Output sau khi xong:
+```
+DNA learnings saved: X items → ~/drafts/writing-dna-learnings.md
+
+Next steps (optional):
+  merge dna       ← gộp learnings vào DNA khi đủ nhiều bài
   content audit ~/drafts/<slug>-draft.md
+```
+
+---
+
+## Merge DNA Command
+
+Trigger khi user nói: `merge dna`, `merge writing dna`, `gộp dna`
+
+### Step 1: Load learnings log
+
+Đọc `~/drafts/writing-dna-learnings.md`.
+Nếu file không tồn tại hoặc rỗng:
+```
+No learnings to merge. Viết thêm bài để tích lũy learnings.
+```
+Dừng.
+
+### Step 2: Load current DNA
+
+Đọc DNA file tại `~/.seo-voices/` (file `.md` đầu tiên tìm thấy).
+
+### Step 3: Dedup và tổng hợp
+
+So sánh từng learning với DNA hiện tại:
+- Nếu trùng nội dung hoặc đã có tương đương → bỏ qua
+- Nếu mâu thuẫn với rule hiện tại → flag riêng, hỏi user
+
+### Step 4: Present full diff
+
+Hiển thị diff DNA trước/sau — toàn bộ những gì sẽ thay đổi:
+
+```
+DNA Merge Preview (vX.Y → vX.Y+1)
+[date]
+
+Changes:
++ [dòng mới]
++ [dòng mới]
+~ [dòng sửa] (cũ: "...")
+
+Conflicts (cần quyết định):
+! [conflict #1]: learning "[...]" mâu thuẫn với hard stop "[...]"
+  Giữ hard stop / Cập nhật hard stop / Bỏ learning? (1/2/3)
+
+Merge vào DNA? (y/n)
+```
+
+Giải quyết conflicts trước khi hỏi merge tổng thể.
+
+### Step 5: Update DNA
+
+Nếu user approve:
+
+1. Cập nhật `~/.seo-voices/<name>.md` với các changes đã duyệt
+2. Bump version trong frontmatter/footer: `vX.Y → vX.Y+1`
+3. Cập nhật dòng `Cập nhật:` ở cuối file với ngày hiện tại và tóm tắt
+4. Archive learnings log: create `~/drafts/writing-dna-learnings-archive/` if it does not exist,
+   then copy `~/drafts/writing-dna-learnings.md`
+   → `~/drafts/writing-dna-learnings-archive/[YYYY-MM-DD].md`
+5. Xóa nội dung `~/drafts/writing-dna-learnings.md` (giữ file, clear content)
+
+Output:
+```
+DNA updated to vX.Y+1 — [N] changes merged.
+Learnings archived: ~/drafts/writing-dna-learnings-archive/[date].md
 ```
 
 ---
@@ -201,3 +341,6 @@ User says any of:
 - `viết bài <topic>`
 - `viết content <topic>`
 - `content-writer <topic>`
+- `merge dna`
+- `merge writing dna`
+- `gộp dna`

@@ -2,3 +2,4 @@ scripts/__pycache__/
 scripts/*.pyc
 seo-report-*.html
 plan.md
+resources/context/writing-dna.md
