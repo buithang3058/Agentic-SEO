@@ -8,9 +8,84 @@ An LLM-first SEO analysis skill for agent IDEs, with 15 specialized sub-skills, 
 - Claude Code (`~/.claude/skills/seo`)
 - Codex (`~/.codex/skills/seo`)
 
+---
+
+## 🚀 Getting Started (Claude Code)
+
+**Important:** These are natural language commands typed in the **Claude Code chat window** — not terminal commands. Do not type them in a shell.
+
+### Step 1 — Clone and open in Claude Code
+
+```bash
+git clone https://github.com/buithang/seo-agentic.git
+cd seo-agentic
+pip install requests beautifulsoup4
+```
+
+Open Claude Code, then open the `seo-agentic` folder as your working directory.
+
+### Step 2 — Create your first project
+
+Type this in the Claude Code chat:
+
+```
+project new MyBlog myblog.com
+```
+
+This creates a project profile at `~/.seo-projects/myblog/context.md` and sets it as active. Fill in the brand, audience, and tone fields — skills use them automatically.
+
+**Other project commands:**
+
+```
+project list              ← show all projects, mark active
+project switch diverFi    ← switch active project
+project status            ← show current project context
+```
+
+### Step 3 — Run your first audit
+
+```
+seo audit myblog.com
+```
+
+Or use your project name directly (no need to type the URL):
+
+```
+seo audit MyBlog
+```
+
+### Step 4 — Write content
+
+```
+write content What is DeFi and why it matters
+```
+
+The skill will research the topic, propose an outline, wait for your approval, then write the full article in your writing voice.
+
+> **Note:** `write content` requires a Writing DNA file at `~/.seo-voices/<your-name>.md`.
+> Copy the template first: `cp resources/context/writing-dna.template.md ~/.seo-voices/your-name.md`
+
+### All available commands
+
+| Command | What it does |
+|---------|-------------|
+| `project new <name> <url>` | Create a new project |
+| `project list` | List all projects |
+| `project switch <name>` | Switch active project |
+| `project status` | Show active project details |
+| `seo audit <url or project name>` | Full website SEO audit |
+| `seo plan <url>` | Strategic SEO plan with topic clusters |
+| `seo page <url>` | Deep single-page analysis |
+| `seo geo <url>` | AI search / GEO optimization |
+| `write content <topic>` | Write SEO article in your voice |
+| `content audit <url>` | Content quality & E-E-A-T check |
+| `merge dna` | Merge writing learnings into your DNA file |
+
+---
+
 ## 📦 Current Inventory
 
-- Specialized sub-skills: `15`
+- Specialized sub-skills: `16`
 - Specialist agents: `7`
 - Scripts in `scripts/`: `25` (`24` Python + `1` shell validation helper)
 
@@ -22,7 +97,8 @@ An LLM-first SEO analysis skill for agent IDEs, with 15 specialized sub-skills, 
 | `seo article` | Article data extraction & LLM-driven content optimization |
 | `seo page` | Deep single-page analysis |
 | `seo technical` | Crawlability, indexability, security, Core Web Vitals, AI crawlers |
-| `seo content` | Content quality & E-E-A-T assessment (Sept 2025 QRG) |
+| `content audit` | Content quality & E-E-A-T assessment (Sept 2025 QRG) |
+| `write content` | SEO content writing in your personal voice with DNA learning loop |
 | `seo schema` | Schema.org detection, validation & JSON-LD generation |
 | `seo sitemap` | XML sitemap analysis & generation |
 | `seo images` | Image optimization audit (alt text, formats, lazy loading, CLS) |
@@ -77,6 +153,120 @@ The rubric standardizes:
 ## 🏭 Industry Templates
 
 Pre-built strategy templates for: **SaaS**, **E-commerce**, **Local Business**, **Publisher/Media**, **Agency**, and **Generic** businesses.
+
+---
+
+## ✍️ Writing Content in Your Voice
+
+The `write content` sub-skill writes SEO articles in your personal writing style. It learns from every article you write and gets better over time.
+
+### How it works
+
+Three phases, one command:
+
+1. **Research + outline** — Web search + SERP analysis, gap identification, outline proposal. You approve before writing starts.
+2. **Writing** — Full article in your voice, following your hard stops and style rules.
+3. **DNA Review** — Automatic after every draft. The skill proposes learnings from the article (new examples, signature phrases, pattern refinements). You approve each one.
+
+Approved learnings accumulate in `~/drafts/writing-dna-learnings.md`. When you have enough, run `merge dna` to fold them back into your DNA file with a full diff preview.
+
+### Step 1: Create your Writing DNA file
+
+Your Writing DNA is a personal voice profile — it tells the skill how you sound, what you never do, and how you think.
+
+```bash
+# Copy the template
+cp resources/context/writing-dna.template.md ~/.seo-voices/your-name.md
+
+# Edit it with your own examples, rules, and patterns
+```
+
+The template has sections for:
+- **Who I am** — your background and what makes your perspective different
+- **How I sound** — example hooks, body paragraphs, and disclaimers in your voice
+- **Signature phrases** — recurring structures you use
+- **Hard stops** — things you never do (e.g., "never open with a definition")
+- **Thinking patterns** — how you move from theory to reality to stakes
+
+The DNA file lives at `~/.seo-voices/` and is never committed to git. It's yours.
+
+### Step 2: Write an article
+
+```text
+write content What is DeFi and why I almost lost everything
+
+# With a brief:
+write content What is DeFi
+Brief: perspective from someone who actually used DeFi, target: new investors
+```
+
+The skill will:
+1. Search the web and fetch top-ranking pages for your keyword
+2. Show you an outline with angle, H2/H3 structure, and a hook draft
+3. Wait for your approval (`ok` / `yes`)
+4. Write the full article in your voice
+5. Save it to `~/drafts/<slug>-draft.md`
+6. Run DNA Review automatically
+
+### Step 3: Approve DNA learnings
+
+After the draft is saved, the skill presents proposals one by one:
+
+```
+DNA Proposal #1 — Examples
+
+"[excerpt from the article that shows a strong voice pattern]"
+
+Reason: Short-line break after a claim — not yet in DNA, very characteristic
+
+Diff:
+  Section: How I sound — Body section
++ "[excerpt]" ← short-line break after claim
+
+Save to learnings? (y/n/edit)
+```
+
+- `y` — save this learning
+- `n` — skip
+- `edit [your version]` — save your edited version instead
+
+### Step 4: Merge learnings into your DNA
+
+When you've written enough articles (3–5 is a good point), merge:
+
+```text
+merge dna
+```
+
+The skill will:
+1. Load `~/drafts/writing-dna-learnings.md`
+2. Deduplicate against your current DNA
+3. Show a full diff preview with every proposed change
+4. Resolve any conflicts with you
+5. Update `~/.seo-voices/<name>.md` with a version bump
+6. Archive the learnings log
+
+### Word count defaults
+
+| Brief | Output |
+|-------|--------|
+| No brief | 1200–2000 words |
+| "short" / "quick" | 800–1000 words |
+| "pillar" / "deep" / "comprehensive" | 2500–4000 words |
+
+### Draft location
+
+Every article saves to `~/drafts/<slug>-draft.md` with frontmatter:
+
+```markdown
+---
+title: What is DeFi and why I almost lost everything
+keyword: what is defi
+date: 2026-04-17
+status: draft
+word_count: 1450
+---
+```
 
 ---
 
@@ -313,25 +503,25 @@ Pull GSC performance data for https://hackingdream.net and identify striking-dis
 ### 🗺️ Sitemap Audit
 
 ```text
-Audit sitemap quality for https://hackingdream.net and flag missing, redirected, or noindex URLs.
+Audit sitemap quality for https://diverFi.com and flag missing, redirected, or noindex URLs.
 ```
 
 ### 🖼️ Image SEO
 
 ```text
-Run image SEO checks for https://hackingdream.net (alt text, lazy loading, dimensions, format suggestions).
+Run image SEO checks for https://diverFi.com (alt text, lazy loading, dimensions, format suggestions).
 ```
 
 ### 📋 Strategic SEO Plan
 
 ```text
-Create a 6-month SEO strategy for https://hackingdream.net with milestones and KPIs.
+Create a 6-month SEO strategy for https://diverFi.com with milestones and KPIs.
 ```
 
 ### 📱 Visual / Mobile Analysis
 
 ```text
-Take desktop and mobile screenshots of https://hackingdream.net and analyze above-the-fold content.
+Take desktop and mobile screenshots of https://diverFi.com and analyze above-the-fold content.
 ```
 
 ---
@@ -341,7 +531,7 @@ Take desktop and mobile screenshots of https://hackingdream.net and analyze abov
 To run **all** analysis types on a single URL:
 
 ```text
-Run a complete SEO audit on https://hackingdream.net — include technical, content, schema, performance,
+Run a complete SEO audit on https://diverFi.com — include technical, content, schema, performance,
 links, GEO, AEO, entity SEO, and sitemap analysis. Provide a prioritized action plan.
 ```
 
