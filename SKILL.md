@@ -1,16 +1,59 @@
 ---
 name: seo
 description: >
-  Deterministic LLM-first SEO audits for websites and blog posts. Use this when
-  the user asks to "perform SEO analysis", "run SEO audit", "analyze SEO",
-  "check technical SEO", "review schema", "Core Web Vitals", "E-E-A-T",
-  "hreflang", "GEO", or "AEO". For full/page audits, run bundled scripts for
-  evidence and return prioritized, confidence-labeled fixes.
+  SEO toolkit with project management, content writing, and 15 audit sub-skills.
+  Use this when the user asks to "perform SEO analysis", "run SEO audit",
+  "analyze SEO", "check technical SEO", "create project", "content write",
+  "SEO plan", "GEO", "AEO", or any SEO-related task. Includes project
+  management, AI-powered content writer, and deterministic audit scripts.
 ---
 
 # SEO Agentic (Antigravity / Claude / Codex)
 
-LLM-first SEO analysis skill with 15 specialized sub-skills, 7 specialist agents, and 25 scripts for website and blog optimization.
+LLM-first SEO toolkit: project management, content writing, and 15 audit sub-skills with 7 specialist agents and 25 scripts.
+
+## On Load — Display Full Menu
+
+When this skill is loaded (user types `/seo` or triggers the skill), ALWAYS display the full command table below. Do not abbreviate or show a subset.
+
+Show this exact message:
+
+```
+SEO Agentic loaded. Available commands:
+
+📋 Project Management
+  project new <name> <url>    — Create new SEO project
+  project list                — List all projects
+  project switch <name>       — Switch active project
+  project status              — Show active project context
+
+✍️ Content
+  content write <topic>       — Write SEO content in your voice
+  content audit <url>         — Content quality & E-E-A-T analysis
+
+🔍 Audits
+  seo audit <url>             — Full website audit with scoring
+  seo page <url>              — Deep single-page analysis
+  seo technical <url>         — Technical SEO checks
+  seo schema <url>            — Schema detection/validation
+  seo images <url>            — Image optimization audit
+  seo sitemap <url>           — Sitemap analysis
+  seo links <url>             — Backlink profile & link health
+
+📊 Strategy
+  seo plan <url>              — Strategic SEO planning
+  seo geo <url>               — AI search optimization (GEO)
+  seo aeo <url>               — Answer Engine Optimization
+  seo competitors <url>       — Competitor page analysis
+  seo hreflang <url>          — International SEO validation
+  seo programmatic <url>      — Programmatic SEO safeguards
+  seo article <url>           — Article data extraction
+
+Tip: Use project name instead of URL after creating a project.
+     Example: seo audit diverfi (instead of seo audit https://diverfi.xyz)
+```
+
+After displaying the menu, wait for the user to type a command. Do not run any audit or analysis until the user specifies one.
 
 ## Deterministic Trigger Mapping
 
@@ -31,7 +74,7 @@ For prompt reliability in Codex/agent IDEs, map common user wording to a fixed w
 | `seo page <url>` | [seo-page](resources/skills/seo-page.md) | Deep single-page analysis |
 | `seo technical <url>` | [seo-technical](resources/skills/seo-technical.md) | Technical SEO checks |
 | `content audit <url>` | [content-audit](resources/skills/content-audit.md) | Content quality & E-E-A-T |
-| `write content <topic>` | [content-writer](resources/skills/content-writer.md) | SEO content in your writing voice |
+| `content write <topic>` | [content-writer](resources/skills/content-writer.md) | SEO content in your writing voice |
 | `seo schema <url>` | [seo-schema](resources/skills/seo-schema.md) | Schema detection/validation/generation |
 | `seo sitemap <url>` | [seo-sitemap](resources/skills/seo-sitemap.md) | Sitemap analysis & generation |
 | `seo images <url>` | [seo-images](resources/skills/seo-images.md) | Image optimization audit |
@@ -43,6 +86,10 @@ For prompt reliability in Codex/agent IDEs, map common user wording to a fixed w
 | `seo article <url>` | [seo-article](resources/skills/seo-article.md) | Article data extraction & LLM optimization |
 | `seo links <url>` | [seo-links](resources/skills/seo-links.md) | External backlink profile & link health |
 | `seo aeo <url>` | [seo-aeo](resources/skills/seo-aeo.md) | Answer Engine Optimization (Featured Snippets, PAA, Knowledge Panel) |
+| `project list` | [seo-project](resources/skills/seo-project.md) | List all projects + active |
+| `project switch <name>` | [seo-project](resources/skills/seo-project.md) | Switch active project |
+| `project new <name> <url>` | [seo-project](resources/skills/seo-project.md) | Create new project |
+| `project status` | [seo-project](resources/skills/seo-project.md) | Show active project context |
 
 ---
 
@@ -50,10 +97,22 @@ For prompt reliability in Codex/agent IDEs, map common user wording to a fixed w
 
 When the user requests SEO analysis, follow this routing:
 
+### Step 0.5 — Project name resolution
+
+Before any skill runs, check if the `<url>` argument looks like a project name (no dots, no `http`):
+
+1. Slugify the argument (lowercase, strip spaces/diacritics)
+2. Check `~/.seo-projects/<slug>/context.md`
+3. If found: extract the `url:` field from frontmatter and use it as the target URL
+4. If not found: treat the argument as a raw URL
+
+Example: `seo audit diverFi` → slug `diverfi` → reads `~/.seo-projects/diverfi/context.md` → URL `https://diverfi.xyz`
+
 ### Step 1 — Identify the Task
 
 Parse the user's request to determine which sub-skill(s) to activate:
 
+- **Project commands** (`project list/switch/new/status`): Read `resources/skills/seo-project.md`
 - **Full audit**: Read `resources/skills/seo-audit.md` — crawl multiple pages, delegate to agents, score and report
 - **Single page**: Read `resources/skills/seo-page.md` — deep dive on one URL
 - **Specific area**: Read the matching `resources/skills/seo-*.md` file

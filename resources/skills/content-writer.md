@@ -4,8 +4,7 @@ description: >
   SEO content writing in user's personal voice. Researches topic via web search
   and SERP analysis, generates outline for approval, then writes full article
   following writing-dna. After writing, reviews article and proposes DNA learnings.
-  Use when user says "write content", "write article", "viết bài", "viết content",
-  "content writer", or "merge dna".
+  Use when user says "content write", "write article", "content writer", or "merge dna".
 ---
 
 # Content Writer
@@ -30,14 +29,39 @@ Please create one from the template at resources/context/writing-dna.template.md
 and save it to ~/.seo-voices/<your-name>.md
 ```
 
+**Step 1.5: Load active project context (if any)**
+
+Check `~/.seo-projects/active`. If the file exists and is non-empty:
+1. Read the slug from `~/.seo-projects/active`
+2. Read `~/.seo-projects/<slug>/context.md`
+3. Check if brand fields are filled: scan the Brand section for lines containing only `...`
+   - If ALL brand fields are placeholder (`...`): warn and skip project context:
+     ```
+     Project context is empty. Fill in ~/.seo-projects/<slug>/context.md for better results.
+     Continuing with DNA only.
+     ```
+   - If at least some fields are filled: extract and hold in memory:
+     - `name`, `url`, `language`, `content_path` from frontmatter
+     - Brand section (audience, tone, value prop) — skip fields still showing `...`
+     - Writing Instructions section (CTA, angles) — skip fields still showing `...`
+4. Show: `Project: <name> (<url>) | Language: <language> | Save to: <content_path or ~/drafts/>`
+
+If `~/.seo-projects/active` does not exist or is empty, continue without project context.
+
 **Step 2: Collect inputs**
 
 Required:
-- **Topic**: chủ đề bài viết
+- **Topic**: article topic
 
 Optional:
-- **Brief**: góc nhìn muốn thể hiện, target audience, experience cá nhân liên quan,
-  word count target (default: 1200–2000 từ)
+- **Brief**: angle/perspective, target audience, relevant personal experience,
+  word count target (default: 1200–2000 words)
+
+If active project context was loaded in Step 1.5, merge it into the brief automatically:
+- Audience from project context → default target audience (brief can override)
+- Tone from project context → writing tone hint
+- Writing Instructions (CTA, angles) → appended to brief context
+- User's explicit brief always takes precedence over project defaults
 
 ---
 
@@ -45,51 +69,51 @@ Optional:
 
 ### 1.1 Research
 
-1. **Web search** topic → thu thập thông tin mới nhất, data, góc nhìn từ 3–5 sources
+1. **Web search** topic → gather latest information, data, perspectives from 3–5 sources
 2. **SERP analysis**: fetch top 3–5 pages currently ranking for the main keyword
    - Truncate each page to first ~2000 tokens: prioritize headings + first 3 paragraphs
    - If a URL returns error/empty: use the WebSearch snippet for that URL instead
-3. **Gap analysis**: tổng hợp — họ viết gì, angle nào, format nào, và quan trọng hơn:
-   họ *không* viết gì, hoặc viết chưa đủ sâu, chưa đủ trung thực
+3. **Gap analysis**: synthesize — what angles/formats do they cover, and more importantly:
+   what they *don't* cover, or cover without enough depth or honesty
 
 ### 1.2 Generate outline
 
 Using research findings + user brief + writing-dna "How I sound" examples:
 
-- **Angle**: 1–2 câu tóm tắt góc tiếp cận khác biệt so với SERP hiện tại
-- **Outline**: H2/H3 với 1-line mô tả stake của từng section
-- **Hook draft**: 1 ví dụ mở bài áp dụng đúng hard stop #1 (không mở bằng định nghĩa,
-  phá vỡ kỳ vọng ngay câu 2)
+- **Angle**: 1–2 sentence summary of the differentiating approach vs current SERP
+- **Outline**: H2/H3 with 1-line description of each section's stake
+- **Hook draft**: 1 example opening applying hard stop #1 (never open with a definition,
+  break expectations by sentence 2)
 
 Output format:
 
 ```
 ## Angle
-[1-2 câu]
+[1-2 sentences]
 
 ## Outline
-- H2: [tên] — [stake của section này là gì]
+- H2: [title] — [what's at stake in this section]
   - H3: [sub-point]
 - H2: ...
 
 ## Hook draft
-[Ví dụ mở bài]
+[Example opening]
 
 ## Research notes
-- [Competitor 1]: angle + điểm thiếu
+- [Competitor 1]: angle + what's missing
 - [Competitor 2]: ...
-- [Fresh data]: điểm nổi bật từ web search
+- [Fresh data]: key finding from web search
 ```
 
 ### 1.3 Approval checkpoint
 
-Sau khi output outline, hỏi:
+After presenting the outline, ask:
 ```
-Approve outline? Hoặc cho tôi biết cần sửa gì.
+Approve outline? Or tell me what to change.
 ```
 
 Wait for response.
-- Approval signal: `ok` / `approve` / `được` / `đồng ý` / `yes` / `1` → proceed to Phase 2
+- Approval signal: `ok` / `approve` / `yes` / `1` → proceed to Phase 2
 - Anything else → revise outline based on feedback, then re-present and ask again
 
 ---
@@ -98,78 +122,85 @@ Wait for response.
 
 ### 2.1 Setup
 
-- Writing-dna đã loaded từ Startup — không load lại
+- Writing-dna already loaded from Startup — do not reload
 - Word count:
-  - Default: **1200–2000 từ** nếu brief không chỉ định
-  - Brief có "ngắn" / "quick" → 800–1000 từ
-  - Brief có "pillar" / "deep" / "comprehensive" → 2500–4000 từ
+  - Default: **1200–2000 words** unless brief specifies otherwise
+  - Brief contains "short" / "quick" → 800–1000 words
+  - Brief contains "pillar" / "deep" / "comprehensive" → 2500–4000 words
 
 ### 2.2 Voice setup
 
-Đọc section **"Who I am"** trong writing-dna để nắm giọng văn tổng thể.
+Read the **"Who I am"** section in writing-dna to understand the overall voice.
 
-Đọc **"How I sound"** examples. Đây là pattern để viết —
-không phải nguồn sự kiện để trích dẫn.
+Read **"How I sound"** examples. These are writing patterns to follow —
+not real events to cite as facts.
 
 ### 2.3 Write the article
 
-**Mở bài** — apply hard stop #1 (không bao giờ mở bằng định nghĩa):
-- Phá vỡ kỳ vọng ngay câu 2
-- Hoặc thừa nhận ngay điều người đọc không ngờ
-- Xem Hook draft từ Phase 1 làm reference
+**Opening** — apply hard stop #1 (never open with a definition):
+- Break expectations by sentence 2
+- Or immediately acknowledge something the reader doesn't expect
+- Use the Hook draft from Phase 1 as reference
 
-**Body** — mỗi H2/H3 theo outline đã approve:
-- Dùng **thinking pattern** từ writing-dna: Lý thuyết nói gì → thực tế sai ở đâu
-- Priority order: (1) Sai lầm/mất tiền → (2) Niềm tin phổ biến nhưng sai → (3) Giải thích nếu cần
-- Không list bước, không "bước đầu tiên là..." — kể bằng câu chuyện cụ thể với lý do cụ thể
+**Body** — each H2/H3 following the approved outline:
+- Apply the **thinking pattern** from writing-dna: What theory says → where reality diverges
+- Priority order: (1) Mistakes/losses → (2) Common beliefs that are wrong → (3) Explanation if needed
+- No step lists, no "first step is..." — tell it as a specific story with specific reasons
 
-**Ngắt dòng**: sau một claim hoặc data point quan trọng, follow bằng 1 câu độc lập ≤10 từ.
+**Line breaks**: after an important claim or data point, follow with 1 standalone sentence ≤10 words.
 ```
-Tôi bị ám ảnh bởi câu chuyện gửi tiết kiệm ngân hàng.
-Bởi,
-… tôi sợ lạm phát.
+[Example — write in the user's voice, not this placeholder]
 ```
 
-**Risk/disclaimer** (khi có):
-- Câu ngắn, dứt khoát. Không chung chung.
-- Đúng: "Crypto có thể về 0. Smart contract có thể bị hack. **Tôi đã mất tiền vì những điều này.**"
-- Sai: "Như với mọi khoản đầu tư, cần nghiên cứu kỹ trước khi tham gia."
+**Risk/disclaimer** (when applicable):
+- Short, direct sentences. Not generic.
+- Good: "Crypto can go to zero. Smart contracts can be hacked. I've lost money because of both."
+- Bad: "As with any investment, please do thorough research before participating."
 
 ### 2.4 Apply hard stops
 
-Đọc section **"Hard stops"** trong writing-dna. Apply tất cả — không duplicate ở đây.
+Read the **"Hard stops"** section in writing-dna. Apply all of them — do not duplicate here.
 
-Mỗi đoạn phải pass **weight test** trước khi tiếp tục:
-> "Đoạn này có chứa: claim cụ thể / số liệu / hệ quả / trải nghiệm cá nhân không?
-> Nếu chỉ là filler/transition → viết lại hoặc xóa."
+Every paragraph must pass the **weight test** before continuing:
+> "Does this paragraph contain: a specific claim / data point / consequence / personal experience?
+> If it's only filler/transition → rewrite or delete."
 
 ### 2.5 Claim attribution
 
-Vì AI viết thay mặt bạn, cần rõ ràng về nguồn gốc claim:
+Since AI writes on your behalf, be explicit about claim origins:
 
-| Loại claim | Cách viết |
+| Claim type | How to write it |
 |---|---|
-| Từ brief (user tự cung cấp) | "tôi..." (first-person OK) |
-| Quan sát thị trường / AI analysis | "theo quan sát..." |
-| AI suy luận, chưa chắc | "tôi chưa chắc nhưng..." |
-| Writing-dna example pattern | Dùng làm style template, KHÔNG trích dẫn như sự kiện thật |
+| From brief (user-provided) | "I..." (first-person OK) |
+| Market observation / AI analysis | "Based on observation..." |
+| AI inference, uncertain | "I'm not certain, but..." |
+| Writing-dna example pattern | Use as style template only — do NOT cite as real events |
 
-**Không fabricate trải nghiệm cá nhân.** Nếu brief không có experience cụ thể,
-đừng thêm "tôi đã..." từ không khí.
+**Never fabricate personal experience.** If the brief has no specific experience,
+do not add "I once..." from thin air.
 
 ---
 
 ## Output
 
-Slug từ topic: lowercase, bỏ dấu tiếng Việt, thay space bằng `-`, giữ chữ+số, truncate 40 ký tự.
-Ví dụ: `"DeFi là gì" → defi-la-gi`
+**Slug:** strip diacritics, lowercase, replace spaces with `-`, keep alphanumeric + hyphens, truncate to 50 chars.
+- English: `"What is DeFi" → what-is-defi`
+- Vietnamese: `"DeFi là gì" → defi-la-gi`
 
-Tạo file tại `~/drafts/<slug>-draft.md`:
+**Save location:**
+- If active project has `content_path` set → save to `<content_path>/<slug>.mdx`
+- Otherwise → save to `~/drafts/<slug>-draft.md`
+
+**Language:** Write the article in the language specified by the active project's `language` field.
+- If `language: Vietnamese` → write in Vietnamese
+- If not set → write in English (default)
+
+Create the file with this frontmatter:
 
 ```markdown
 ---
 title: [H1 title]
-keyword: [target keyword chính]
+keyword: [primary target keyword]
 date: [YYYY-MM-DD]
 status: draft
 word_count: [approximate]
@@ -178,90 +209,89 @@ word_count: [approximate]
 [full article]
 ```
 
-Sau khi save, output:
+After saving, output:
 ```
-Saved: ~/drafts/<slug>-draft.md
+Saved: <full path to saved file>
 ```
 
-Tiếp tục ngay Phase 3: DNA Review.
+Continue immediately to Phase 3: DNA Review.
 
 ---
 
 ## Phase 3: DNA Review
 
-Chạy tự động ngay sau khi file draft được save. Không hỏi user có muốn chạy không.
+Runs automatically after the draft file is saved. Do not ask the user if they want to run it.
 
 ### 3.1 Analyze article
 
-Đọc lại `~/drafts/<slug>-draft.md`. Phân tích theo 4 loại đề xuất:
+Re-read `~/drafts/<slug>-draft.md`. Analyze for 4 types of proposals:
 
-**Examples hay** — đoạn nào áp dụng tốt voice/hook/body/disclaimer pattern, chưa có
-trong DNA hoặc hay hơn example hiện tại.
+**Strong examples** — passages that apply voice/hook/body/disclaimer patterns well,
+not yet in DNA or better than the current DNA example.
 
-**Signature phrases mới** — cụm từ/cấu trúc câu đặc trưng xuất hiện trong bài
-mà chưa có trong DNA.
+**New signature phrases** — recurring phrases or sentence structures that appear in the article
+and are not yet in the DNA.
 
-**Pattern refinements** — Pattern A/B/C được dùng theo cách tinh tế hoặc khác so với
-mô tả hiện tại trong DNA.
+**Pattern refinements** — Pattern A/B/C used in a subtle or different way compared to
+its current description in the DNA.
 
-**Hard stops mới / exceptions** — rule mới xuất hiện, hoặc trường hợp ngoại lệ
-với rule hiện tại cần ghi nhớ.
+**New hard stops / exceptions** — a new rule emerged, or an exception to an existing rule worth remembering.
 
-Nếu không có đề xuất nào (bài không có gì mới so với DNA): output
-`DNA review: nothing new — bài này không thêm pattern mới.` và dừng.
+If no proposals (article adds nothing new vs DNA): output
+`DNA review: nothing new — this article added no new patterns.` and stop.
 
 ### 3.2 Present proposals
 
-Với mỗi đề xuất, hiển thị theo format:
+For each proposal, display in this format:
 
 ```
-DNA Proposal #N — [Loại: Examples | Phrases | Pattern | Hard stop]
+DNA Proposal #N — [Type: Examples | Phrases | Pattern | Hard stop]
 
-"[excerpt hoặc phrase]"
+"[excerpt or phrase]"
 
-Lý do: [tại sao hay, tại sao quan trọng]
+Reason: [why it's good, why it matters]
 
 Diff:
-  Section: [tên section trong DNA]
-+ [dòng sẽ thêm]
+  Section: [section name in DNA]
++ [line to add]
 
-Lưu vào learnings? (y/n/edit)
+Save to learnings? (y/n/edit)
 ```
 
-- `y` hoặc `yes` → lưu đề xuất này
-- `n` hoặc `no` → bỏ qua
-- `edit [nội dung]` → dùng nội dung user nhập thay vì đề xuất gốc, sau đó lưu
+- `y` or `yes` → save this proposal
+- `n` or `no` → skip
+- `edit [content]` → use the user's version instead of the original proposal, then save
 
-Hỏi từng đề xuất một. Không batch.
+Ask about each proposal one at a time. Do not batch.
 
 ### 3.3 Save approved learnings
 
-Các đề xuất được approve (kể cả `edit`) → append vào `~/drafts/writing-dna-learnings.md`:
+Approved proposals (including `edit`) → append to `~/drafts/writing-dna-learnings.md`:
 
 ```markdown
 ## [slug] — [YYYY-MM-DD]
 
 ### Examples
-- "[excerpt]" ← [lý do ngắn]
+- "[excerpt]" ← [short reason]
 
 ### Phrases
-- "[phrase]" — [khi nào dùng]
+- "[phrase]" — [when to use]
 
 ### Pattern updates
 - Pattern [A/B/C]: [refinement]
 
 ### Hard stops
-- [rule mới hoặc exception]
+- [new rule or exception]
 ```
 
-Chỉ ghi các section có nội dung. Bỏ section rỗng.
+Only write sections that have content. Omit empty sections.
 
-Output sau khi xong:
+Output when done:
 ```
 DNA learnings saved: X items → ~/drafts/writing-dna-learnings.md
 
 Next steps (optional):
-  merge dna       ← gộp learnings vào DNA khi đủ nhiều bài
+  merge dna       ← fold learnings into DNA when you have enough articles
   content audit ~/drafts/<slug>-draft.md
 ```
 
@@ -269,60 +299,60 @@ Next steps (optional):
 
 ## Merge DNA Command
 
-Trigger khi user nói: `merge dna`, `merge writing dna`, `gộp dna`
+Triggered when user says: `merge dna`, `merge writing dna`
 
 ### Step 1: Load learnings log
 
-Đọc `~/drafts/writing-dna-learnings.md`.
-Nếu file không tồn tại hoặc rỗng:
+Read `~/drafts/writing-dna-learnings.md`.
+If file does not exist or is empty:
 ```
-No learnings to merge. Viết thêm bài để tích lũy learnings.
+No learnings to merge. Write more articles to accumulate learnings.
 ```
-Dừng.
+Stop.
 
 ### Step 2: Load current DNA
 
-Đọc DNA file tại `~/.seo-voices/` (file `.md` đầu tiên tìm thấy).
+Read DNA file at `~/.seo-voices/` (first `.md` file found).
 
-### Step 3: Dedup và tổng hợp
+### Step 3: Deduplicate and synthesize
 
-So sánh từng learning với DNA hiện tại:
-- Nếu trùng nội dung hoặc đã có tương đương → bỏ qua
-- Nếu mâu thuẫn với rule hiện tại → flag riêng, hỏi user
+Compare each learning against the current DNA:
+- If content is duplicate or equivalent already exists → skip
+- If it conflicts with an existing rule → flag separately, ask user
 
 ### Step 4: Present full diff
 
-Hiển thị diff DNA trước/sau — toàn bộ những gì sẽ thay đổi:
+Show the before/after DNA diff — everything that will change:
 
 ```
 DNA Merge Preview (vX.Y → vX.Y+1)
 [date]
 
 Changes:
-+ [dòng mới]
-+ [dòng mới]
-~ [dòng sửa] (cũ: "...")
++ [new line]
++ [new line]
+~ [modified line] (was: "...")
 
-Conflicts (cần quyết định):
-! [conflict #1]: learning "[...]" mâu thuẫn với hard stop "[...]"
-  Giữ hard stop / Cập nhật hard stop / Bỏ learning? (1/2/3)
+Conflicts (need decision):
+! [conflict #1]: learning "[...]" conflicts with hard stop "[...]"
+  Keep hard stop / Update hard stop / Drop learning? (1/2/3)
 
-Merge vào DNA? (y/n)
+Merge into DNA? (y/n)
 ```
 
-Giải quyết conflicts trước khi hỏi merge tổng thể.
+Resolve conflicts before asking for the final merge approval.
 
 ### Step 5: Update DNA
 
-Nếu user approve:
+If user approves:
 
-1. Cập nhật `~/.seo-voices/<name>.md` với các changes đã duyệt
-2. Bump version trong frontmatter/footer: `vX.Y → vX.Y+1`
-3. Cập nhật dòng `Cập nhật:` ở cuối file với ngày hiện tại và tóm tắt
+1. Update `~/.seo-voices/<name>.md` with the approved changes
+2. Bump version in frontmatter/footer: `vX.Y → vX.Y+1`
+3. Update the `Updated:` line at the bottom of the file with today's date and a summary
 4. Archive learnings log: create `~/drafts/writing-dna-learnings-archive/` if it does not exist,
    then copy `~/drafts/writing-dna-learnings.md`
    → `~/drafts/writing-dna-learnings-archive/[YYYY-MM-DD].md`
-5. Xóa nội dung `~/drafts/writing-dna-learnings.md` (giữ file, clear content)
+5. Clear the content of `~/drafts/writing-dna-learnings.md` (keep the file, clear the content)
 
 Output:
 ```
@@ -335,12 +365,9 @@ Learnings archived: ~/drafts/writing-dna-learnings-archive/[date].md
 ## Trigger phrases
 
 User says any of:
-- `write content <topic>`
+- `content write <topic>`
 - `write article <topic>`
 - `content writer <topic>`
-- `viết bài <topic>`
-- `viết content <topic>`
 - `content-writer <topic>`
 - `merge dna`
 - `merge writing dna`
-- `gộp dna`

@@ -57,12 +57,12 @@ seo audit MyBlog
 ### Step 4 — Write content
 
 ```
-write content What is DeFi and why it matters
+content write What is DeFi and why it matters
 ```
 
 The skill will research the topic, propose an outline, wait for your approval, then write the full article in your writing voice.
 
-> **Note:** `write content` requires a Writing DNA file at `~/.seo-voices/<your-name>.md`.
+> **Note:** `content write` requires a Writing DNA file at `~/.seo-voices/<your-name>.md`.
 > Copy the template first: `cp resources/context/writing-dna.template.md ~/.seo-voices/your-name.md`
 
 ### All available commands
@@ -77,7 +77,7 @@ The skill will research the topic, propose an outline, wait for your approval, t
 | `seo plan <url>` | Strategic SEO plan with topic clusters |
 | `seo page <url>` | Deep single-page analysis |
 | `seo geo <url>` | AI search / GEO optimization |
-| `write content <topic>` | Write SEO article in your voice |
+| `content write <topic>` | Write SEO article in your voice |
 | `content audit <url>` | Content quality & E-E-A-T check |
 | `merge dna` | Merge writing learnings into your DNA file |
 
@@ -98,7 +98,7 @@ The skill will research the topic, propose an outline, wait for your approval, t
 | `seo page` | Deep single-page analysis |
 | `seo technical` | Crawlability, indexability, security, Core Web Vitals, AI crawlers |
 | `content audit` | Content quality & E-E-A-T assessment (Sept 2025 QRG) |
-| `write content` | SEO content writing in your personal voice with DNA learning loop |
+| `content write` | SEO content writing in your personal voice with DNA learning loop |
 | `seo schema` | Schema.org detection, validation & JSON-LD generation |
 | `seo sitemap` | XML sitemap analysis & generation |
 | `seo images` | Image optimization audit (alt text, formats, lazy loading, CLS) |
@@ -158,7 +158,7 @@ Pre-built strategy templates for: **SaaS**, **E-commerce**, **Local Business**, 
 
 ## ✍️ Writing Content in Your Voice
 
-The `write content` sub-skill writes SEO articles in your personal writing style. It learns from every article you write and gets better over time.
+The `content write` sub-skill writes SEO articles in your personal writing style. It learns from every article you write and gets better over time.
 
 ### How it works
 
@@ -193,10 +193,10 @@ The DNA file lives at `~/.seo-voices/` and is never committed to git. It's yours
 ### Step 2: Write an article
 
 ```text
-write content What is DeFi and why I almost lost everything
+content write What is DeFi and why I almost lost everything
 
 # With a brief:
-write content What is DeFi
+content write What is DeFi
 Brief: perspective from someone who actually used DeFi, target: new investors
 ```
 
