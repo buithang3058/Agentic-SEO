@@ -12,187 +12,73 @@ description: >
 ## Process
 
 ### 1. Discovery
-- Business type, target audience, competitors, goals
-- Current site assessment (if exists)
-- Budget and timeline constraints
-- Key performance indicators (KPIs)
+Business type, target audience, competitors, goals, current site assessment, budget/timeline, KPIs.
 
 ### 2. Competitive Analysis
-- Identify top 5 competitors
-- Analyze their content strategy, schema usage, technical setup
-- Identify keyword gaps and content opportunities
-- Assess their E-E-A-T signals
-- Estimate their domain authority
+Top 5 competitors: content strategy, schema, technical setup, keyword gaps, E-E-A-T signals, domain authority.
 
 ### 3. Architecture Design
-- Load industry template from `resources/templates/`
-- Design URL hierarchy and content pillars
-- Plan internal linking strategy
-- Sitemap structure with quality gates applied
-- Information architecture for user journeys
+Load industry template from `resources/templates/`. Design URL hierarchy, content pillars, internal linking, sitemap, information architecture.
 
 ### 4. Content Strategy
-- Content gaps vs competitors — use `scripts/competitor_gap.py` for data-driven analysis
-- Page types and estimated counts
-- Blog/resource topics and publishing cadence
-- E-E-A-T building plan (author bios, credentials, experience signals)
-- Content calendar with priorities
+Content gaps vs competitors (`scripts/competitor_gap.py`). Page types and counts. Blog topics and cadence. E-E-A-T building (author bios, credentials). Content calendar with priorities.
 
 ### 4.5 Topical Authority Cluster Planning
 
-**Why:** Google's Helpful Content system rewards sites demonstrating comprehensive topical expertise. A single page on "red team ops" ranks worse than a hub of 8-15 interlinked articles covering the topic from multiple angles.
+**Hub-and-spoke model:** Pillar page (3–5K words, head term, covers all subtopics) → Cluster articles (1.5–3K words, long-tail variants, deep dive). Every cluster links back to pillar + 2–3 siblings.
 
-#### Hub-and-Spoke Model
+**Planning steps:**
+1. Identify 3–5 pillar topics from core competencies
+2. Generate 8–15 cluster topics per pillar (Google Autocomplete, PAA, `competitor_gap.py`)
+3. Map to URLs: `/pillar/cluster-article`
+4. Track with topic-cluster spreadsheet (status, publish dates)
 
-```
-                    [Pillar Page]
-                   /      |       \
-          [Cluster 1] [Cluster 2] [Cluster 3]
-          /    \        |    \        |    \
-       [Sub] [Sub]   [Sub] [Sub]  [Sub] [Sub]
-```
+**Industry cluster templates:**
 
-#### Pillar Page Requirements
-- **Word count**: 3,000-5,000 words (comprehensive overview)
-- **Structure**: Covers all major subtopics at surface level, links to each cluster article for depth
-- **Target keyword**: Head term (e.g., "cobalt strike beacon")
-- **Internal links**: Bidirectional links to/from every cluster article
-- **Schema**: Add `Article` or `WebPage` schema with `about` and `mentions` properties
-
-#### Cluster Article Requirements
-- **Word count**: 1,500-3,000 words (deep dive on one aspect)
-- **Target keyword**: Long-tail variant (e.g., "cobalt strike beacon sleep mask")
-- **Internal links**: Must link back to pillar page + 2-3 sibling cluster articles
-- **Freshness**: Update cluster articles when new information becomes available
-
-#### Planning Process
-1. **Identify 3-5 pillar topics** from your core competencies or target keywords
-2. **Generate 8-15 cluster topics** per pillar using:
-   - Google Autocomplete / People Also Ask
-   - `scripts/competitor_gap.py` for competitor-covered subtopics
-   - `scripts/article_seo.py --json` for related keyword extraction
-3. **Map content to URLs** following flat architecture: `/pillar/cluster-article`
-4. **Set internal link rules**: every cluster → pillar (required), cluster ↔ cluster (2-3 siblings)
-5. **Track coverage**: maintain a topic-cluster spreadsheet with status and publish dates
-
-#### Industry Cluster Templates
-
-| Industry | Example Pillar | Cluster Topics (sample) |
-|----------|---------------|------------------------|
-| Cybersecurity | Penetration Testing | OSINT, Web App Testing, Network Pentesting, Reporting, Tools, Methodology, Compliance |
-| SaaS | Product Documentation | Getting Started, API Reference, Integrations, Troubleshooting, Best Practices, Migration |
-| E-commerce | Product Category | Buying Guide, Comparison, Care Guide, Reviews, FAQ, Accessories |
-| Local Service | Service Area | City-specific pages, Service FAQ, Pricing, Before/After, Testimonials |
+| Industry | Example Pillar | Cluster Sample |
+|----------|---------------|----------------|
+| Cybersecurity | Penetration Testing | OSINT, Web App, Network, Tools, Reporting |
+| SaaS | Product Documentation | Getting Started, API, Integrations, FAQ |
+| E-commerce | Product Category | Buying Guide, Comparison, Reviews, FAQ |
+| Local Service | Service Area | City pages, FAQ, Pricing, Testimonials |
 
 ### 5. Technical Foundation
-- Hosting and performance requirements
-- Schema markup plan per page type
-- Core Web Vitals baseline targets
-- AI search readiness requirements
-- Mobile-first considerations
+Hosting/performance, schema per page type, Core Web Vitals targets, AI search readiness, mobile-first.
 
 ### 5.5 AI Visibility Plan (GEO)
-
-**Why:** AI search engines (Perplexity, ChatGPT, Claude) now drive discovery for many queries.
-A plan without AI citation strategy is missing a growing traffic channel.
-
-#### Measure current GEO Score (if URL provided and PERPLEXITY_API_KEY is set)
 
 ```bash
 python3 <SKILL_DIR>/scripts/geo_benchmark.py <url> --n 20
 ```
 
-Embed the `## AI Visibility Score` output block into `SEO-STRATEGY.md` as a baseline.
-If PERPLEXITY_API_KEY is not set, note: `[GEO Score skipped — set PERPLEXITY_API_KEY to enable]`
-
-#### Interpret the score
+Embed `## AI Visibility Score` into `SEO-STRATEGY.md`. If no key: note `[GEO Score skipped — set PERPLEXITY_API_KEY]`
 
 | GEO Score | Signal | Priority actions |
 |-----------|--------|-----------------|
-| 0-20 | AI engines rarely cite this site | llms.txt, FAQ pages, unblock AI crawlers |
-| 21-49 | Partial visibility | Expand thin content, add structured data |
-| 50-79 | Good citation rate | Maintain freshness, add entity signals |
-| 80-100 | Strong AI visibility | Monitor competitors, protect lead |
+| 0–20 | Rarely cited | llms.txt, FAQ pages, unblock crawlers |
+| 21–49 | Partial visibility | Expand thin content, structured data |
+| 50–79 | Good citation rate | Freshness, entity signals |
+| 80–100 | Strong | Monitor competitors, protect lead |
 
-#### Priority actions from uncited queries
+For each uncited query: create/expand page, add FAQ with exact phrasing, add to `/llms.txt`. Cap at top 5, commercial intent first.
 
-For each question in the "Not cited" list from the benchmark output:
-- Create or expand a page targeting that topic
-- Add an FAQ section with the exact question phrasing
-- Add a pointer to that page in `/llms.txt`
+**Timeline:** Q1 `/llms.txt` + unblock crawlers | Q2 FAQ for top 5 uncited | Q3 entity-building content | Q4 re-run benchmark
 
-Cap at top 5 uncited queries for the plan. Flag queries with commercial intent first.
+### 6. Implementation Roadmap
 
-#### Suggested AI visibility timeline
-
-| Quarter | Action |
-|---------|--------|
-| Q1 | Add `/llms.txt`, unblock GPTBot/PerplexityBot/ClaudeBot in robots.txt |
-| Q2 | Add FAQ sections for top 5 uncited queries |
-| Q3 | Publish entity-building content (about page, author bios, brand mentions) |
-| Q4 | Re-run benchmark, compare delta, adjust content based on gaps |
-
-### 6. Implementation Roadmap (4 phases)
-
-#### Phase 1 — Foundation (weeks 1-4)
-- Technical setup and infrastructure
-- Core pages (home, about, contact, main services)
-- Essential schema implementation
-- Analytics and tracking setup
-
-#### Phase 2 — Expansion (weeks 5-12)
-- Content creation for primary pages
-- Blog launch with initial posts
-- Internal linking structure
-- Local SEO setup (if applicable)
-
-#### Phase 3 — Scale (weeks 13-24)
-- Advanced content development
-- Link building and outreach
-- GEO optimization
-- Performance optimization
-
-#### Phase 4 — Authority (months 7-12)
-- Thought leadership content
-- PR and media mentions
-- Advanced schema implementation
-- Continuous optimization
+| Phase | Timeline | Focus |
+|-------|----------|-------|
+| Foundation | Weeks 1–4 | Technical setup, core pages, schema, analytics |
+| Expansion | Weeks 5–12 | Content creation, blog launch, internal linking, local SEO |
+| Scale | Weeks 13–24 | Advanced content, link building, GEO optimization |
+| Authority | Months 7–12 | Thought leadership, PR/media, advanced schema |
 
 ## Industry Templates
 
-Load from `resources/templates/`:
-- `saas.md` — SaaS/software companies
-- `local-service.md` — Local service businesses
-- `ecommerce.md` — E-commerce stores
-- `publisher.md` — Content publishers/media
-- `agency.md` — Agencies and consultancies
-- `generic.md` — General business template
+Load from `resources/templates/`: `saas.md` · `local-service.md` · `ecommerce.md` · `publisher.md` · `agency.md` · `generic.md`
 
 ## Output
 
-### Deliverables
-- `SEO-STRATEGY.md` — Complete strategic plan (includes GEO Score baseline if measured)
-- `COMPETITOR-ANALYSIS.md` — Competitive insights
-- `CONTENT-CALENDAR.md` — Content roadmap
-- `IMPLEMENTATION-ROADMAP.md` — Phased action plan
-- `SITE-STRUCTURE.md` — URL hierarchy and architecture
-- `TOPIC-CLUSTERS.md` — Pillar/cluster mapping with internal link plan
-- `AI-VISIBILITY-PLAN.md` — GEO Score baseline, uncited query actions, quarterly timeline
+**Deliverables:** `SEO-STRATEGY.md` · `COMPETITOR-ANALYSIS.md` · `CONTENT-CALENDAR.md` · `IMPLEMENTATION-ROADMAP.md` · `SITE-STRUCTURE.md` · `TOPIC-CLUSTERS.md` · `AI-VISIBILITY-PLAN.md`
 
-### KPI Targets
-| Metric | Baseline | 3 Month | 6 Month | 12 Month |
-|--------|----------|---------|---------|----------|
-| Organic Traffic | ... | ... | ... | ... |
-| Keyword Rankings | ... | ... | ... | ... |
-| Domain Authority | ... | ... | ... | ... |
-| Indexed Pages | ... | ... | ... | ... |
-| Core Web Vitals | ... | ... | ... | ... |
-| Topical Coverage % | ... | ... | ... | ... |
-| GEO Score | ... | ... | ... | ... |
-
-### Success Criteria
-- Clear, measurable goals per phase
-- Resource requirements defined
-- Dependencies identified
-- Risk mitigation strategies
-
+**KPI table:** Organic Traffic · Keyword Rankings · Domain Authority · Indexed Pages · Core Web Vitals · Topical Coverage % · GEO Score (baseline → 3mo → 6mo → 12mo targets)
