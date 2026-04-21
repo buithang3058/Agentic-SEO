@@ -21,47 +21,27 @@ Also handles: `merge dna` — merges accumulated learnings into your DNA file.
 **Step 1: Load writing-dna**
 
 Detect DNA file path: check `~/.seo-voices/` for `.md` files. Use the first one found.
-If no file exists, halt immediately:
-
-```
-Writing-DNA file not found at ~/.seo-voices/
-Please create one from the template at resources/context/writing-dna.template.md
-and save it to ~/.seo-voices/<your-name>.md
-```
+If no file exists, halt: "Writing-DNA file not found at ~/.seo-voices/ — create one from
+resources/context/writing-dna.template.md and save to ~/.seo-voices/<your-name>.md"
 
 **Step 1.5: Load active project context (if any)**
 
-Check `~/.seo-projects/active`. If the file exists and is non-empty:
-1. Read the slug from `~/.seo-projects/active`
-2. Read `~/.seo-projects/<slug>/context.md`
-3. Check if brand fields are filled: scan the Brand section for lines containing only `...`
-   - If ALL brand fields are placeholder (`...`): warn and skip project context:
-     ```
-     Project context is empty. Fill in ~/.seo-projects/<slug>/context.md for better results.
-     Continuing with DNA only.
-     ```
-   - If at least some fields are filled: extract and hold in memory:
-     - `name`, `url`, `language`, `content_path` from frontmatter
-     - Brand section (audience, tone, value prop) — skip fields still showing `...`
-     - Writing Instructions section (CTA, angles) — skip fields still showing `...`
-4. Show: `Project: <name> (<url>) | Language: <language> | Save to: <content_path or ~/drafts/>`
-
-If `~/.seo-projects/active` does not exist or is empty, continue without project context.
+Check `~/.seo-projects/active`. If non-empty:
+1. Read slug → read `~/.seo-projects/<slug>/context.md`
+2. If all Brand fields are `...` → warn and skip project context
+3. If partial → extract: name, url, language, content_path, Brand section, Writing Instructions
+4. Show: `Project: <name> (<url>) | Language: <language> | Save to: <content_path>`
+5. Read `~/.seo-projects/<slug>/marketing-context.md` if it exists:
+   - If ALL fields are `...` → skip silently
+   - If partial → extract: value prop, audience, positioning, angles that work/avoid, content pillars, CTA mapping
+   - Skip Writing Instructions from AI Skills section (use context.md's instead)
 
 **Step 2: Collect inputs**
 
-Required:
-- **Topic**: article topic
+Required: **Topic**. Optional: angle, audience, experience, word count (default 1200–2000).
 
-Optional:
-- **Brief**: angle/perspective, target audience, relevant personal experience,
-  word count target (default: 1200–2000 words)
-
-If active project context was loaded in Step 1.5, merge it into the brief automatically:
-- Audience from project context → default target audience (brief can override)
-- Tone from project context → writing tone hint
-- Writing Instructions (CTA, angles) → appended to brief context
-- User's explicit brief always takes precedence over project defaults
+Project context auto-merges into brief (audience, tone, CTAs, angles). User's explicit brief
+always overrides project defaults.
 
 ---
 
@@ -69,52 +49,21 @@ If active project context was loaded in Step 1.5, merge it into the brief automa
 
 ### 1.1 Research
 
-1. **Web search** topic → gather latest information, data, perspectives from 3–5 sources
-2. **SERP analysis**: fetch top 3–5 pages currently ranking for the main keyword
-   - Truncate each page to first ~2000 tokens: prioritize headings + first 3 paragraphs
-   - If a URL returns error/empty: use the WebSearch snippet for that URL instead
-3. **Gap analysis**: synthesize — what angles/formats do they cover, and more importantly:
-   what they *don't* cover, or cover without enough depth or honesty
+1. Web search topic → gather latest info from 3–5 sources
+2. SERP: fetch top 3–5 ranking pages (first ~2000 tokens each: headings + first 3 paragraphs)
+3. Gap analysis: what competitors cover, and more importantly what they don't
 
 ### 1.2 Generate outline
 
-Using research findings + user brief + writing-dna "How I sound" examples:
-
-- **Angle**: 1–2 sentence summary of the differentiating approach vs current SERP
-- **Outline**: H2/H3 with 1-line description of each section's stake
-- **Hook draft**: 1 example opening applying hard stop #1 (never open with a definition,
-  break expectations by sentence 2)
-
-Output format:
-
-```
-## Angle
-[1-2 sentences]
-
-## Outline
-- H2: [title] — [what's at stake in this section]
-  - H3: [sub-point]
-- H2: ...
-
-## Hook draft
-[Example opening]
-
-## Research notes
-- [Competitor 1]: angle + what's missing
-- [Competitor 2]: ...
-- [Fresh data]: key finding from web search
-```
+Present: **Angle** (1–2 sentences differentiating from current SERP), **Outline** (H2/H3 with
+1-line stake per section), **Hook draft** (opening that never starts with a definition),
+**Research notes** (per competitor: angle + gap; fresh data from web search).
 
 ### 1.3 Approval checkpoint
 
-After presenting the outline, ask:
-```
-Approve outline? Or tell me what to change.
-```
-
-Wait for response.
-- Approval signal: `ok` / `approve` / `yes` / `1` → proceed to Phase 2
-- Anything else → revise outline based on feedback, then re-present and ask again
+Ask: "Approve outline? Or tell me what to change."
+- `ok` / `yes` / `approve` / `1` → proceed to Phase 2
+- Anything else → revise and re-present
 
 ---
 
@@ -122,252 +71,103 @@ Wait for response.
 
 ### 2.1 Setup
 
-- Writing-dna already loaded from Startup — do not reload
-- Word count:
-  - Default: **1200–2000 words** unless brief specifies otherwise
-  - Brief contains "short" / "quick" → 800–1000 words
-  - Brief contains "pillar" / "deep" / "comprehensive" → 2500–4000 words
+DNA loaded from Startup — do not reload.
+Word count: default 1200–2000 | "short/quick" → 800–1000 | "pillar/deep/comprehensive" → 2500–4000
 
 ### 2.2 Voice setup
 
-Read the **"Who I am"** section in writing-dna to understand the overall voice.
+Read **"Who I am"** and **"How I sound"** sections in writing-dna.
+Examples are style patterns — not real events to cite as facts.
 
-Read **"How I sound"** examples. These are writing patterns to follow —
-not real events to cite as facts.
+### 2.3 Write
 
-### 2.3 Write the article
+**Opening:** break expectations by sentence 2. Use Hook draft from Phase 1 as reference.
 
-**Opening** — apply hard stop #1 (never open with a definition):
-- Break expectations by sentence 2
-- Or immediately acknowledge something the reader doesn't expect
-- Use the Hook draft from Phase 1 as reference
+**Body:** follow approved outline. Apply thinking pattern: theory → where reality diverges.
+Priority: (1) mistakes/losses → (2) common wrong beliefs → (3) explanation.
+No step lists. Specific stories with specific reasons.
+After important claims: follow with a standalone sentence ≤10 words.
 
-**Body** — each H2/H3 following the approved outline:
-- Apply the **thinking pattern** from writing-dna: What theory says → where reality diverges
-- Priority order: (1) Mistakes/losses → (2) Common beliefs that are wrong → (3) Explanation if needed
-- No step lists, no "first step is..." — tell it as a specific story with specific reasons
-
-**Line breaks**: after an important claim or data point, follow with 1 standalone sentence ≤10 words.
-```
-[Example — write in the user's voice, not this placeholder]
-```
-
-**Risk/disclaimer** (when applicable):
-- Short, direct sentences. Not generic.
-- Good: "Crypto can go to zero. Smart contracts can be hacked. I've lost money because of both."
-- Bad: "As with any investment, please do thorough research before participating."
+**Risk/disclaimer:** short, direct sentences. Specific, not generic.
+Good: "Crypto can go to zero. Smart contracts can be hacked. I've lost money because of both."
 
 ### 2.4 Apply hard stops
 
-Read the **"Hard stops"** section in writing-dna. Apply all of them — do not duplicate here.
-
-Every paragraph must pass the **weight test** before continuing:
-> "Does this paragraph contain: a specific claim / data point / consequence / personal experience?
-> If it's only filler/transition → rewrite or delete."
+Read **"Hard stops"** in writing-dna. Apply all. Every paragraph passes weight test:
+"Does this contain: specific claim / data point / consequence / personal experience? If not → rewrite."
 
 ### 2.5 Claim attribution
-
-Since AI writes on your behalf, be explicit about claim origins:
 
 | Claim type | How to write it |
 |---|---|
 | From brief (user-provided) | "I..." (first-person OK) |
 | Market observation / AI analysis | "Based on observation..." |
 | AI inference, uncertain | "I'm not certain, but..." |
-| Writing-dna example pattern | Use as style template only — do NOT cite as real events |
+| Writing-dna example pattern | Use as style only — do NOT cite as real events |
 
-**Never fabricate personal experience.** If the brief has no specific experience,
-do not add "I once..." from thin air.
+Never fabricate personal experience.
 
 ---
 
 ## Output
 
-**Slug:** strip diacritics, lowercase, replace spaces with `-`, keep alphanumeric + hyphens, truncate to 50 chars.
-- English: `"What is DeFi" → what-is-defi`
-- Vietnamese: `"DeFi là gì" → defi-la-gi`
+**Slug:** strip diacritics, lowercase, spaces → `-`, alphanumeric + hyphens, truncate to 50 chars.
 
-**Save location:**
-- If active project has `content_path` set → save to `<content_path>/<slug>.mdx`
-- Otherwise → save to `~/drafts/<slug>-draft.md`
+**Save location:** `<content_path>/<slug>.mdx` if project set, otherwise `~/drafts/<slug>-draft.md`
 
-**Language:** Write the article in the language specified by the active project's `language` field.
-- If `language: Vietnamese` → write in Vietnamese
-- If not set → write in English (default)
+**Language:** use project `language` field. Vietnamese if set, English if not.
 
-Create the file with this frontmatter:
+Frontmatter: `title`, `keyword`, `date` (YYYY-MM-DD), `status: draft`, `word_count`.
 
-```markdown
----
-title: [H1 title]
-keyword: [primary target keyword]
-date: [YYYY-MM-DD]
-status: draft
-word_count: [approximate]
----
-
-[full article]
-```
-
-After saving, output:
-```
-Saved: <full path to saved file>
-```
-
-Continue immediately to Phase 3: DNA Review.
+After saving, output: `Saved: <full path>` then continue immediately to Phase 3.
 
 ---
 
 ## Phase 3: DNA Review
 
-Runs automatically after the draft file is saved. Do not ask the user if they want to run it.
+Runs automatically after save — do not ask.
 
-### 3.1 Analyze article
+### 3.1 Analyze
 
-Re-read `~/drafts/<slug>-draft.md`. Analyze for 4 types of proposals:
+Re-read saved draft. Look for 4 proposal types:
+- **Strong examples** — applies voice/hook/body/disclaimer well, better than or absent from DNA
+- **New signature phrases** — recurring sentence structures not yet in DNA
+- **Pattern refinements** — A/B/C pattern used in a subtle/different way vs current description
+- **New hard stops / exceptions** — new rule emerged or exception worth remembering
 
-**Strong examples** — passages that apply voice/hook/body/disclaimer patterns well,
-not yet in DNA or better than the current DNA example.
-
-**New signature phrases** — recurring phrases or sentence structures that appear in the article
-and are not yet in the DNA.
-
-**Pattern refinements** — Pattern A/B/C used in a subtle or different way compared to
-its current description in the DNA.
-
-**New hard stops / exceptions** — a new rule emerged, or an exception to an existing rule worth remembering.
-
-If no proposals (article adds nothing new vs DNA): output
-`DNA review: nothing new — this article added no new patterns.` and stop.
+If nothing new: output "DNA review: nothing new — this article added no new patterns." and stop.
 
 ### 3.2 Present proposals
 
-For each proposal, display in this format:
-
-```
-DNA Proposal #N — [Type: Examples | Phrases | Pattern | Hard stop]
-
-"[excerpt or phrase]"
-
-Reason: [why it's good, why it matters]
-
-Diff:
-  Section: [section name in DNA]
-+ [line to add]
-
-Save to learnings? (y/n/edit)
-```
-
-- `y` or `yes` → save this proposal
-- `n` or `no` → skip
-- `edit [content]` → use the user's version instead of the original proposal, then save
-
-Ask about each proposal one at a time. Do not batch.
+For each, one at a time: show type, excerpt, reason, and diff (section + line to add).
+Ask: "Save to learnings? (y/n/edit)"
+- `y` → save | `n` → skip | `edit [content]` → use user's version and save
 
 ### 3.3 Save approved learnings
 
-Approved proposals (including `edit`) → append to `~/drafts/writing-dna-learnings.md`:
+Append to `~/drafts/writing-dna-learnings.md` under slug + date header.
+Sections: Examples, Phrases, Pattern updates, Hard stops (omit empty sections).
 
-```markdown
-## [slug] — [YYYY-MM-DD]
-
-### Examples
-- "[excerpt]" ← [short reason]
-
-### Phrases
-- "[phrase]" — [when to use]
-
-### Pattern updates
-- Pattern [A/B/C]: [refinement]
-
-### Hard stops
-- [new rule or exception]
-```
-
-Only write sections that have content. Omit empty sections.
-
-Output when done:
-```
-DNA learnings saved: X items → ~/drafts/writing-dna-learnings.md
-
-Next steps (optional):
-  merge dna       ← fold learnings into DNA when you have enough articles
-  content audit ~/drafts/<slug>-draft.md
-```
+Output: "DNA learnings saved: X items → ~/drafts/writing-dna-learnings.md"
+Next steps hint: `merge dna` | `content audit ~/drafts/<slug>-draft.md`
 
 ---
 
 ## Merge DNA Command
 
-Triggered when user says: `merge dna`, `merge writing dna`
+Triggered by: `merge dna` / `merge writing dna`
 
-### Step 1: Load learnings log
+1. Read `~/drafts/writing-dna-learnings.md` — if empty, stop with "No learnings to merge."
+2. Read DNA file at `~/.seo-voices/` (first `.md`)
+3. Deduplicate: skip equivalents, flag conflicts for user decision
+4. Show full diff preview (additions, modifications, conflicts) — resolve conflicts before final ask
+5. On approval: update DNA file, bump version, update date line, archive learnings log
 
-Read `~/drafts/writing-dna-learnings.md`.
-If file does not exist or is empty:
-```
-No learnings to merge. Write more articles to accumulate learnings.
-```
-Stop.
-
-### Step 2: Load current DNA
-
-Read DNA file at `~/.seo-voices/` (first `.md` file found).
-
-### Step 3: Deduplicate and synthesize
-
-Compare each learning against the current DNA:
-- If content is duplicate or equivalent already exists → skip
-- If it conflicts with an existing rule → flag separately, ask user
-
-### Step 4: Present full diff
-
-Show the before/after DNA diff — everything that will change:
-
-```
-DNA Merge Preview (vX.Y → vX.Y+1)
-[date]
-
-Changes:
-+ [new line]
-+ [new line]
-~ [modified line] (was: "...")
-
-Conflicts (need decision):
-! [conflict #1]: learning "[...]" conflicts with hard stop "[...]"
-  Keep hard stop / Update hard stop / Drop learning? (1/2/3)
-
-Merge into DNA? (y/n)
-```
-
-Resolve conflicts before asking for the final merge approval.
-
-### Step 5: Update DNA
-
-If user approves:
-
-1. Update `~/.seo-voices/<name>.md` with the approved changes
-2. Bump version in frontmatter/footer: `vX.Y → vX.Y+1`
-3. Update the `Updated:` line at the bottom of the file with today's date and a summary
-4. Archive learnings log: create `~/drafts/writing-dna-learnings-archive/` if it does not exist,
-   then copy `~/drafts/writing-dna-learnings.md`
-   → `~/drafts/writing-dna-learnings-archive/[YYYY-MM-DD].md`
-5. Clear the content of `~/drafts/writing-dna-learnings.md` (keep the file, clear the content)
-
-Output:
-```
-DNA updated to vX.Y+1 — [N] changes merged.
-Learnings archived: ~/drafts/writing-dna-learnings-archive/[date].md
-```
+Output: "DNA updated to vX.Y+1 — N changes merged. Learnings archived: [path]"
 
 ---
 
 ## Trigger phrases
 
-User says any of:
-- `content write <topic>`
-- `write article <topic>`
-- `content writer <topic>`
-- `content-writer <topic>`
-- `merge dna`
-- `merge writing dna`
+- `content write <topic>` / `write article <topic>` / `content writer <topic>`
+- `content-writer <topic>` / `merge dna` / `merge writing dna`
