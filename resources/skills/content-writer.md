@@ -29,7 +29,7 @@ resources/context/writing-dna.template.md and save to ~/.seo-voices/<your-name>.
 Check `~/.seo-projects/active`. If non-empty:
 1. Read slug → read `~/.seo-projects/<slug>/context.md`
 2. If all Brand fields are `...` → warn and skip project context
-3. If partial → extract: name, url, language, content_path, Brand section, Writing Instructions
+3. If partial → extract: name, url, language, content_path, content_structure, tracks, frontmatter_schema, Brand section, Writing Instructions
 4. Show: `Project: <name> (<url>) | Language: <language> | Save to: <content_path>`
 5. Read `~/.seo-projects/<slug>/marketing-context.md` if it exists:
    - If ALL fields are `...` → skip silently
@@ -113,11 +113,18 @@ Never fabricate personal experience.
 
 **Slug:** strip diacritics, lowercase, spaces → `-`, alphanumeric + hyphens, truncate to 50 chars.
 
-**Save location:** `<content_path>/<slug>.mdx` if project set, otherwise `~/drafts/<slug>-draft.md`
+**Save location:**
+- If project has `content_structure: track-based`:
+  1. Show track list from project `tracks` map. Ask: "Which track?"
+  2. Count `.mdx` files in `<content_path>/<track>/` → `order` = count + 1 (zero-pad to 2 digits)
+  3. Save to `<content_path>/<track>/<order>-<slug>.mdx`
+- Otherwise: `<content_path>/<slug>.mdx` if project set, else `~/drafts/<slug>-draft.md`
 
 **Language:** use project `language` field. Vietnamese if set, English if not.
 
-Frontmatter: `title`, `keyword`, `date` (YYYY-MM-DD), `status: draft`, `word_count`.
+**Frontmatter:** use project `frontmatter_schema.fields` if defined, otherwise default
+(`title`, `keyword`, `date` YYYY-MM-DD, `status: draft`, `word_count`).
+For track-based: set `order` from file count above; `estimatedTime` = estimate from word count (~200 words/min, round to nearest 5 min).
 
 After saving, output: `Saved: <full path>` then continue immediately to Phase 3.
 
