@@ -1114,3 +1114,154 @@ class TestComparisonTable:
         ]
         table = _format_comparison_table("example.com", {"score": 50.0, "n": 20, "margin_of_error": 22.0}, rows)
         assert table.index("high.com") < table.index("low.com")
+
+    def test_gap_tied_with_competitor(self):
+        """When primary score == top competitor score, 'Tied with top competitor' line appears."""
+        from geo_benchmark import _format_comparison_table
+        rows = [{"domain": "rival.com", "score": 50.0, "n": 20, "margin_of_error": 21.0}]
+        table = _format_comparison_table("example.com", {"score": 50.0, "n": 20, "margin_of_error": 22.0}, rows)
+        assert "Tied with top competitor: rival.com" in table
+
+    def test_empty_competitor_rows_no_gap_line(self):
+        """With no competitor rows the gap line is not emitted."""
+        from geo_benchmark import _format_comparison_table
+        table = _format_comparison_table("example.com", {"score": 50.0, "n": 20, "margin_of_error": 22.0}, [])
+        assert "Gap" not in table
+        assert "Tied" not in table
+
+
+# ---------------------------------------------------------------------------
+# 14. query_engine_with_retry — second failure path
+# ---------------------------------------------------------------------------
+
+class TestQueryEngineWithRetry:
+    """query_engine_with_retry: second consecutive failure emits warning to stderr."""
+
+    def test_second_failure_prints_warning_and_returns_none(self, capsys, monkeypatch):
+        """Both attempts raise → warning printed to stderr, None returned."""
+        import geo_benchmark
+        monkeypatch.setattr("geo_benchmark.time.sleep", lambda s: None)
+
+        def always_fail(query):
+            raise RuntimeError("connection refused")
+
+        result = geo_benchmark.query_engine_with_retry(always_fail, "Test query?", delay=0)
+        assert result is None
+        captured = capsys.readouterr()
+        assert "Warning: API call failed after retry" in captured.err
+        assert "connection refused" in captured.err
+
+
+# ---------------------------------------------------------------------------
+# 15. --competitors flag integration tests
+# ---------------------------------------------------------------------------
+
+class TestCompetitorsFlag:
+    """main() --competitors: valid domain, malformed domain, all-skipped fallback."""
+
+    def _base_argv(self, extra=None):
+        args = ["geo_benchmark.py", "https://example.com", "--n", "1"]
+        if extra:
+            args += extra
+        return args
+
+    def test_valid_competitor_populates_domains(self, monkeypatch, capsys):
+        """Valid --competitors value adds 'domains' list to JSON output."""
+        import geo_benchmark
+
+        monkeypatch.setenv("PERPLEXITY_API_KEY", "fake")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.setattr("sys.argv", self._base_argv([
+            "--competitors", "rival.com", "--json",
+        ]))
+        monkeypatch.setattr("geo_benchmark.fetch_headings", lambda url, timeout=15: [("h2", "Test")])
+
+        call_count = [0]
+        def multi_run(**kw):
+            call_count[0] += 1
+            return {
+                "results": [{"query": "How to Test?", "cited": call_count[0] == 1, "engines_citing": ["perplexity"], "skipped": False}],
+                "skipped_count": 0,
+                "engine_pair": "perplexity",
+            }
+        monkeypatch.setattr("geo_benchmark.run_benchmark", multi_run)
+
+        captured_prints = []
+        orig_print = print
+        def mock_print(*args, **kwargs):
+            if kwargs.get("file") is sys.stderr:
+                orig_print(*args, **kwargs)
+            else:
+                captured_prints.append(" ".join(str(a) for a in args))
+        monkeypatch.setattr("builtins.print", mock_print)
+
+        geo_benchmark.main()
+
+        output = json.loads("\n".join(captured_prints))
+        assert "domains" in output
+        domains = output["domains"]
+        assert any(d["domain"] == "example.com" and d["primary"] is True for d in domains)
+        assert any(d["domain"] == "rival.com" and d["primary"] is False for d in domains)
+
+    def test_malformed_competitor_prints_warning(self, monkeypatch, capsys):
+        """A competitor that parses to an empty domain is skipped with a stderr warning."""
+        import geo_benchmark
+
+        monkeypatch.setenv("PERPLEXITY_API_KEY", "fake")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        # "////" prepends to "https:////" which has empty netloc → malformed
+        monkeypatch.setattr("sys.argv", self._base_argv(["--competitors", "////"]))
+        monkeypatch.setattr("geo_benchmark.fetch_headings", lambda url, timeout=15: [("h2", "Test")])
+        monkeypatch.setattr("geo_benchmark.run_benchmark", lambda **kw: {
+            "results": [{"query": "How to Test?", "cited": True, "engines_citing": ["perplexity"], "skipped": False}],
+            "skipped_count": 0,
+            "engine_pair": "perplexity",
+        })
+
+        geo_benchmark.main()
+
+        captured = capsys.readouterr()
+        assert "Warning: skipping malformed competitor domain" in captured.err
+
+    def test_all_skipped_competitor_uses_zero_score_and_shows_table(self, monkeypatch):
+        """Competitor with all-skipped results gets score=0 and comparison table is printed."""
+        import geo_benchmark
+
+        monkeypatch.setenv("PERPLEXITY_API_KEY", "fake")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.setattr("sys.argv", self._base_argv(["--competitors", "slow.com"]))
+        monkeypatch.setattr("geo_benchmark.fetch_headings", lambda url, timeout=15: [("h2", "Test")])
+
+        call_count = [0]
+        def multi_run(**kw):
+            call_count[0] += 1
+            if call_count[0] == 1:
+                # Primary: one answered question
+                return {
+                    "results": [{"query": "How to Test?", "cited": True, "engines_citing": ["perplexity"], "skipped": False}],
+                    "skipped_count": 0,
+                    "engine_pair": "perplexity",
+                }
+            else:
+                # Competitor: all results skipped → zero-score fallback
+                return {
+                    "results": [{"query": "How to Test?", "cited": False, "engines_citing": [], "skipped": True}],
+                    "skipped_count": 1,
+                    "engine_pair": "perplexity",
+                }
+        monkeypatch.setattr("geo_benchmark.run_benchmark", multi_run)
+
+        captured_prints = []
+        orig_print = print
+        def mock_print(*args, **kwargs):
+            if kwargs.get("file") is sys.stderr:
+                orig_print(*args, **kwargs)
+            else:
+                captured_prints.append(" ".join(str(a) for a in args))
+        monkeypatch.setattr("builtins.print", mock_print)
+
+        geo_benchmark.main()
+
+        full_output = "\n".join(captured_prints)
+        assert "GEO Score Comparison" in full_output
+        assert "slow.com" in full_output
