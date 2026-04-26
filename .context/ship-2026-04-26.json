@@ -1,0 +1,26 @@
+{
+  "date": "2026-04-26",
+  "version": "0.0.2.0",
+  "pr": "buithang3058/Agentic-SEO#1",
+  "merge_commit": "37081cff68d44a5230d9f2fa86e5ed7332b0b774",
+  "branch": "feat/geo-score-integration",
+  "stats": {
+    "commits": 22,
+    "files_changed": 21,
+    "insertions": 2441,
+    "deletions": 653,
+    "tests_total": 78,
+    "tests_added": 72,
+    "token_reduction_pct": 71
+  },
+  "highlights": [
+    "--competitors flag for GEO Score comparison table",
+    "content write skill (voice-aware article writer + DNA loop)",
+    "marketing interview skill (14-question positioning extractor)",
+    "30-day content calendar skill",
+    "multi-project management (project new/list/switch/status)",
+    "SKILL.md split: routing table (102 lines) + SKILL-DOCS.md on-demand",
+    "71% token efficiency improvement across skill files",
+    "78 tests, all passing (from 6 baseline)"
+  ]
+}
