@@ -2,3 +2,7 @@ scripts/__pycache__/
 scripts/*.pyc
 seo-report-*.html
 plan.md
+resources/context/writing-dna.md
+# Added by code-review-graph
+.code-review-graph/
+drafts/

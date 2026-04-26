@@ -650,10 +650,12 @@ class TestDeltaMOE:
     No note when delta exceeds MOE.
     """
 
-    def _make_history_file(self, history_dir, domain_slug, score, timestamp="2026-04-07-000000"):
+    def _make_history_file(self, history_dir, domain_slug, score, timestamp="2026-04-07-000000", engine_pair=None):
         os.makedirs(history_dir, exist_ok=True)
         path = os.path.join(history_dir, f"{domain_slug}-{timestamp}.json")
         data = {"domain": domain_slug, "score": score, "timestamp": "2026-04-07T00:00:00Z", "n": 20, "margin_of_error": 21.91}
+        if engine_pair is not None:
+            data["engine_pair"] = engine_pair
         with open(path, "w") as f:
             json.dump(data, f)
         return path
@@ -770,3 +772,496 @@ class TestDeltaMOE:
         full_output = "\n".join(captured)
         assert "Previous run:" in full_output
         assert "not statistically significant" not in full_output
+
+    def test_engine_pair_mismatch_shows_warning(self, tmp_path, monkeypatch):
+        """When engine_pair changes between runs, a note must be shown so delta is not misread."""
+        import geo_benchmark
+        history_dir = str(tmp_path / "hist")
+        # Previous run was Perplexity-only
+        self._make_history_file(history_dir, "example.com", score=40.0, engine_pair="perplexity")
+
+        monkeypatch.setenv("PERPLEXITY_API_KEY", "fake")
+        monkeypatch.setenv("OPENAI_API_KEY", "fake_openai")  # now dual-engine
+        monkeypatch.setattr("sys.argv", [
+            "geo_benchmark.py", "https://example.com", "--n", "20", "--save",
+        ])
+        monkeypatch.setattr("geo_benchmark.fetch_headings", lambda url, timeout=15: [("h2", f"H{i}") for i in range(20)])
+        monkeypatch.setattr("geo_benchmark.run_benchmark", lambda **kw: {
+            "results": [
+                {"query": f"How to H{i}?", "cited": True, "engines_citing": ["perplexity", "openai"], "skipped": False}
+                for i in range(20)
+            ],
+            "skipped_count": 0,
+            "engine_pair": "perplexity+openai",
+        })
+        monkeypatch.setattr("geo_benchmark.os.path.expanduser", lambda p: p.replace("~/.seo-geo-history/", history_dir + "/"))
+
+        captured = []
+        original_print = print
+        def mock_print(*args, **kwargs):
+            if kwargs.get("file") is sys.stderr:
+                original_print(*args, **kwargs)
+            else:
+                captured.append(" ".join(str(a) for a in args))
+        monkeypatch.setattr("builtins.print", mock_print)
+
+        geo_benchmark.main()
+        full_output = "\n".join(captured)
+        assert "engine_pair changed" in full_output
+        assert "perplexity" in full_output
+        assert "perplexity+openai" in full_output
+
+
+# ---------------------------------------------------------------------------
+# 13. headings_to_questions — primary question generation path
+# ---------------------------------------------------------------------------
+
+class TestHeadingsToQuestions:
+    """
+    headings_to_questions() is the primary question generation path.
+    H1/H2 → "How to...?", H3 → "What is...?"
+    Filler headings (HEADING_FILLER_BLOCKLIST) are skipped.
+    Trailing ?. is stripped before formatting.
+    """
+
+    def test_h1_becomes_how_to(self):
+        from geo_benchmark import headings_to_questions
+        result = headings_to_questions([("h1", "Improve SEO")])
+        assert result == ["How to Improve SEO?"]
+
+    def test_h2_becomes_how_to(self):
+        from geo_benchmark import headings_to_questions
+        result = headings_to_questions([("h2", "Build Links")])
+        assert result == ["How to Build Links?"]
+
+    def test_h3_becomes_what_is(self):
+        from geo_benchmark import headings_to_questions
+        result = headings_to_questions([("h3", "Core Web Vitals")])
+        assert result == ["What is Core Web Vitals?"]
+
+    def test_filler_heading_skipped(self):
+        """Headings in HEADING_FILLER_BLOCKLIST must be excluded."""
+        from geo_benchmark import headings_to_questions
+        for filler in ["Introduction", "FAQ", "Overview", "Conclusion", "Summary"]:
+            assert headings_to_questions([("h2", filler)]) == [], f"Expected {filler!r} to be filtered"
+
+    def test_trailing_punctuation_stripped(self):
+        """Trailing ? and . in heading text must be stripped before formatting."""
+        from geo_benchmark import headings_to_questions
+        result = headings_to_questions([("h2", "Improve SEO.")])
+        assert result == ["How to Improve SEO?"]
+        result = headings_to_questions([("h2", "Improve SEO?")])
+        assert result == ["How to Improve SEO?"]
+
+    def test_mixed_headings(self):
+        """Mix of H1, H2, H3, and filler in one call."""
+        from geo_benchmark import headings_to_questions
+        headings = [
+            ("h1", "Improve SEO"),
+            ("h2", "Introduction"),   # filler — skipped
+            ("h3", "E-E-A-T"),
+            ("h2", "Build Links"),
+        ]
+        result = headings_to_questions(headings)
+        assert result == [
+            "How to Improve SEO?",
+            "What is E-E-A-T?",
+            "How to Build Links?",
+        ]
+
+
+# ---------------------------------------------------------------------------
+# 14. generate_questions_with_llm — LLM-based question generation path
+# ---------------------------------------------------------------------------
+
+class TestGenerateQuestionsWithLLM:
+    """
+    generate_questions_with_llm() calls GPT-4o-mini, strips markdown fences,
+    parses JSON. Any failure returns [] (fallback to heading parse).
+    """
+
+    def test_happy_path_returns_questions(self, monkeypatch):
+        """Clean JSON array returned by LLM is parsed correctly."""
+        import geo_benchmark
+        from unittest.mock import Mock
+        mock_get = Mock()
+        mock_get.raise_for_status = Mock()
+        mock_get.text = "<html><body><h1>SEO Guide</h1></body></html>"
+        mock_post = Mock()
+        mock_post.raise_for_status = Mock()
+        mock_post.json.return_value = {
+            "choices": [{"message": {"content": '["What is SEO?", "How to build links?"]'}}]
+        }
+        monkeypatch.setattr("geo_benchmark.requests.get", lambda *a, **kw: mock_get)
+        monkeypatch.setattr("geo_benchmark.requests.post", lambda *a, **kw: mock_post)
+        result = geo_benchmark.generate_questions_with_llm("https://example.com", "fake_key", 2)
+        assert result == ["What is SEO?", "How to build links?"]
+
+    def test_page_content_passed_to_llm(self, monkeypatch):
+        """Page content is fetched and included in the LLM prompt."""
+        import geo_benchmark
+        from unittest.mock import Mock
+        captured = {}
+        mock_get = Mock()
+        mock_get.raise_for_status = Mock()
+        mock_get.text = "<html><body><h1>Stripe Payments API</h1><p>Accept payments globally.</p></body></html>"
+        mock_post = Mock()
+        mock_post.raise_for_status = Mock()
+        mock_post.json.return_value = {
+            "choices": [{"message": {"content": '["How does Stripe Payments API work?"]'}}]
+        }
+        def capture_post(*args, **kwargs):
+            captured["body"] = kwargs.get("json", {})
+            return mock_post
+        monkeypatch.setattr("geo_benchmark.requests.get", lambda *a, **kw: mock_get)
+        monkeypatch.setattr("geo_benchmark.requests.post", capture_post)
+        geo_benchmark.generate_questions_with_llm("https://stripe.com", "fake_key", 1)
+        user_msg = captured["body"]["messages"][1]["content"]
+        assert "Stripe Payments API" in user_msg
+        assert "Page content" in user_msg
+
+    def test_fetch_failure_falls_back_to_url_only(self, monkeypatch):
+        """If page fetch fails, LLM still runs with URL-only prompt (no crash)."""
+        import geo_benchmark
+        from unittest.mock import Mock
+        captured = {}
+        def raise_on_get(*args, **kwargs):
+            raise ConnectionError("timeout")
+        mock_post = Mock()
+        mock_post.raise_for_status = Mock()
+        mock_post.json.return_value = {
+            "choices": [{"message": {"content": '["What is SEO?"]'}}]
+        }
+        def capture_post(*args, **kwargs):
+            captured["body"] = kwargs.get("json", {})
+            return mock_post
+        monkeypatch.setattr("geo_benchmark.requests.get", raise_on_get)
+        monkeypatch.setattr("geo_benchmark.requests.post", capture_post)
+        result = geo_benchmark.generate_questions_with_llm("https://example.com", "fake_key", 1)
+        assert result == ["What is SEO?"]
+        user_msg = captured["body"]["messages"][1]["content"]
+        assert "Page content" not in user_msg
+
+    def test_markdown_fence_stripped(self, monkeypatch):
+        """LLM response wrapped in ```json ... ``` fences is unwrapped correctly."""
+        import geo_benchmark
+        from unittest.mock import Mock
+        mock_get = Mock()
+        mock_get.raise_for_status = Mock()
+        mock_get.text = "<html><body><p>content</p></body></html>"
+        mock_post = Mock()
+        mock_post.raise_for_status = Mock()
+        mock_post.json.return_value = {
+            "choices": [{"message": {"content": '```json\n["What is SEO?"]\n```'}}]
+        }
+        monkeypatch.setattr("geo_benchmark.requests.get", lambda *a, **kw: mock_get)
+        monkeypatch.setattr("geo_benchmark.requests.post", lambda *a, **kw: mock_post)
+        result = geo_benchmark.generate_questions_with_llm("https://example.com", "fake_key", 1)
+        assert result == ["What is SEO?"]
+
+    def test_exception_returns_empty_list(self, monkeypatch):
+        """Any exception (timeout, bad JSON, auth error) returns [] for graceful fallback."""
+        import geo_benchmark
+        from unittest.mock import Mock
+        mock_get = Mock()
+        mock_get.raise_for_status = Mock()
+        mock_get.text = "<html><body></body></html>"
+        def raise_timeout(*args, **kwargs):
+            raise TimeoutError("connection timeout")
+        monkeypatch.setattr("geo_benchmark.requests.get", lambda *a, **kw: mock_get)
+        monkeypatch.setattr("geo_benchmark.requests.post", raise_timeout)
+        result = geo_benchmark.generate_questions_with_llm("https://example.com", "fake_key", 5)
+        assert result == []
+
+
+class TestFetchPageText:
+    """Tests for fetch_page_text helper."""
+
+    def test_returns_visible_text(self, monkeypatch):
+        """Extracts text from body, strips scripts and styles."""
+        import geo_benchmark
+        from unittest.mock import Mock
+        mock_resp = Mock()
+        mock_resp.raise_for_status = Mock()
+        mock_resp.text = (
+            "<html><head><style>body{margin:0}</style></head>"
+            "<body><script>alert(1)</script><h1>SEO Guide</h1><p>Learn SEO.</p></body></html>"
+        )
+        monkeypatch.setattr("geo_benchmark.requests.get", lambda *a, **kw: mock_resp)
+        text = geo_benchmark.fetch_page_text("https://example.com")
+        assert "SEO Guide" in text
+        assert "Learn SEO" in text
+        assert "alert" not in text
+        assert "margin" not in text
+
+    def test_truncates_to_max_chars(self, monkeypatch):
+        """Output is capped at max_chars."""
+        import geo_benchmark
+        from unittest.mock import Mock
+        mock_resp = Mock()
+        mock_resp.raise_for_status = Mock()
+        mock_resp.text = f"<html><body><p>{'x' * 5000}</p></body></html>"
+        monkeypatch.setattr("geo_benchmark.requests.get", lambda *a, **kw: mock_resp)
+        text = geo_benchmark.fetch_page_text("https://example.com", max_chars=100)
+        assert len(text) <= 100
+
+    def test_returns_empty_on_fetch_failure(self, monkeypatch):
+        """Returns empty string if page fetch fails (no exception raised)."""
+        import geo_benchmark
+        def raise_err(*args, **kwargs):
+            raise ConnectionError("timeout")
+        monkeypatch.setattr("geo_benchmark.requests.get", raise_err)
+        text = geo_benchmark.fetch_page_text("https://example.com")
+        assert text == ""
+
+
+class TestExtractDomainEdgeCases:
+    """Guard against empty domain causing false-positive citation matches."""
+
+    def test_malformed_url_returns_empty_string(self):
+        """http:// with no host produces empty domain — callers must guard."""
+        from geo_benchmark import extract_domain
+        assert extract_domain("http://") == ""
+
+    def test_empty_domain_matches_every_url(self):
+        """Demonstrates why empty domain is dangerous: '' in any URL = True."""
+        # This is a property test, not a feature — documents the footgun.
+        assert "" in "https://example.com/page"
+        assert "" in "https://totally-unrelated.com"
+
+
+# ---------------------------------------------------------------------------
+# 15. format_text_report — reliability warning + recommendation tiers
+# ---------------------------------------------------------------------------
+
+class TestFormatTextReportEdgeCases:
+    """
+    format_text_report() shows a WARNING prefix when reliable=False.
+    Recommendation tiers: <20 → llms.txt + FAQ, <50 → expand + schema, >=50 → maintain.
+    """
+
+    def test_unreliable_score_shows_warning(self):
+        """When reliable=False, the report must include a WARNING line."""
+        from geo_benchmark import format_text_report, compute_score
+        results = [{"cited": False}]
+        score_data = compute_score(results)
+        benchmark = {"results": [{"query": "q1", "cited": False, "engines_citing": [], "skipped": False}],
+                     "skipped_count": 0, "engine_pair": "perplexity"}
+        sufficiency = {"reliable": False, "message": "Insufficient data, score unreliable: 11/20 questions skipped"}
+        report = format_text_report("example.com", score_data, benchmark, sufficiency)
+        assert "WARNING:" in report
+        assert "Insufficient data" in report
+
+    def test_score_below_20_recommends_llmstxt_and_faq(self):
+        """Score < 20 → recommend llms.txt + FAQ + crawler access."""
+        from geo_benchmark import format_text_report, compute_score
+        results = [{"cited": False}] * 10
+        score_data = compute_score(results)
+        benchmark = {"results": [{"query": f"q{i}", "cited": False, "engines_citing": [], "skipped": False} for i in range(10)],
+                     "skipped_count": 0, "engine_pair": "perplexity"}
+        sufficiency = {"reliable": True, "message": ""}
+        report = format_text_report("example.com", score_data, benchmark, sufficiency)
+        assert "llms.txt" in report
+        assert "FAQ" in report
+
+    def test_score_50_or_above_recommends_maintenance(self):
+        """Score >= 50 → recommend maintaining content freshness."""
+        from geo_benchmark import format_text_report, compute_score
+        results = [{"cited": True}] * 10
+        score_data = compute_score(results)
+        benchmark = {"results": [{"query": f"q{i}", "cited": True, "engines_citing": ["perplexity"], "skipped": False} for i in range(10)],
+                     "skipped_count": 0, "engine_pair": "perplexity"}
+        sufficiency = {"reliable": True, "message": ""}
+        report = format_text_report("example.com", score_data, benchmark, sufficiency)
+        assert "Strong citation rate" in report
+
+
+class TestComparisonTable:
+    """Tests for _format_comparison_table."""
+
+    def test_shows_all_domains(self):
+        """Primary domain and all competitors appear in table."""
+        from geo_benchmark import _format_comparison_table
+        rows = [
+            {"domain": "competitor.com", "score": 60.0, "n": 20, "margin_of_error": 21.0},
+        ]
+        table = _format_comparison_table("example.com", {"score": 45.0, "n": 20, "margin_of_error": 22.0}, rows)
+        assert "example.com (you)" in table
+        assert "competitor.com" in table
+
+    def test_gap_behind_shows_negative(self):
+        """When primary is behind top competitor, gap line shows negative."""
+        from geo_benchmark import _format_comparison_table
+        rows = [{"domain": "top.com", "score": 70.0, "n": 20, "margin_of_error": 20.0}]
+        table = _format_comparison_table("example.com", {"score": 40.0, "n": 20, "margin_of_error": 22.0}, rows)
+        assert "behind top.com" in table
+        assert "-30" in table
+
+    def test_gap_ahead_shows_positive(self):
+        """When primary is ahead, gap line shows positive."""
+        from geo_benchmark import _format_comparison_table
+        rows = [{"domain": "slow.com", "score": 20.0, "n": 20, "margin_of_error": 18.0}]
+        table = _format_comparison_table("example.com", {"score": 55.0, "n": 20, "margin_of_error": 22.0}, rows)
+        assert "ahead of slow.com" in table
+        assert "+35" in table
+
+    def test_sorted_by_score_descending(self):
+        """Table rows appear sorted highest score first."""
+        from geo_benchmark import _format_comparison_table
+        rows = [
+            {"domain": "low.com", "score": 20.0, "n": 20, "margin_of_error": 18.0},
+            {"domain": "high.com", "score": 80.0, "n": 20, "margin_of_error": 18.0},
+        ]
+        table = _format_comparison_table("example.com", {"score": 50.0, "n": 20, "margin_of_error": 22.0}, rows)
+        assert table.index("high.com") < table.index("low.com")
+
+    def test_gap_tied_with_competitor(self):
+        """When primary score == top competitor score, 'Tied with top competitor' line appears."""
+        from geo_benchmark import _format_comparison_table
+        rows = [{"domain": "rival.com", "score": 50.0, "n": 20, "margin_of_error": 21.0}]
+        table = _format_comparison_table("example.com", {"score": 50.0, "n": 20, "margin_of_error": 22.0}, rows)
+        assert "Tied with top competitor: rival.com" in table
+
+    def test_empty_competitor_rows_no_gap_line(self):
+        """With no competitor rows the gap line is not emitted."""
+        from geo_benchmark import _format_comparison_table
+        table = _format_comparison_table("example.com", {"score": 50.0, "n": 20, "margin_of_error": 22.0}, [])
+        assert "Gap" not in table
+        assert "Tied" not in table
+
+
+# ---------------------------------------------------------------------------
+# 14. query_engine_with_retry — second failure path
+# ---------------------------------------------------------------------------
+
+class TestQueryEngineWithRetry:
+    """query_engine_with_retry: second consecutive failure emits warning to stderr."""
+
+    def test_second_failure_prints_warning_and_returns_none(self, capsys, monkeypatch):
+        """Both attempts raise → warning printed to stderr, None returned."""
+        import geo_benchmark
+        monkeypatch.setattr("geo_benchmark.time.sleep", lambda s: None)
+
+        def always_fail(query):
+            raise RuntimeError("connection refused")
+
+        result = geo_benchmark.query_engine_with_retry(always_fail, "Test query?", delay=0)
+        assert result is None
+        captured = capsys.readouterr()
+        assert "Warning: API call failed after retry" in captured.err
+        assert "connection refused" in captured.err
+
+
+# ---------------------------------------------------------------------------
+# 15. --competitors flag integration tests
+# ---------------------------------------------------------------------------
+
+class TestCompetitorsFlag:
+    """main() --competitors: valid domain, malformed domain, all-skipped fallback."""
+
+    def _base_argv(self, extra=None):
+        args = ["geo_benchmark.py", "https://example.com", "--n", "1"]
+        if extra:
+            args += extra
+        return args
+
+    def test_valid_competitor_populates_domains(self, monkeypatch, capsys):
+        """Valid --competitors value adds 'domains' list to JSON output."""
+        import geo_benchmark
+
+        monkeypatch.setenv("PERPLEXITY_API_KEY", "fake")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.setattr("sys.argv", self._base_argv([
+            "--competitors", "rival.com", "--json",
+        ]))
+        monkeypatch.setattr("geo_benchmark.fetch_headings", lambda url, timeout=15: [("h2", "Test")])
+
+        call_count = [0]
+        def multi_run(**kw):
+            call_count[0] += 1
+            return {
+                "results": [{"query": "How to Test?", "cited": call_count[0] == 1, "engines_citing": ["perplexity"], "skipped": False}],
+                "skipped_count": 0,
+                "engine_pair": "perplexity",
+            }
+        monkeypatch.setattr("geo_benchmark.run_benchmark", multi_run)
+
+        captured_prints = []
+        orig_print = print
+        def mock_print(*args, **kwargs):
+            if kwargs.get("file") is sys.stderr:
+                orig_print(*args, **kwargs)
+            else:
+                captured_prints.append(" ".join(str(a) for a in args))
+        monkeypatch.setattr("builtins.print", mock_print)
+
+        geo_benchmark.main()
+
+        output = json.loads("\n".join(captured_prints))
+        assert "domains" in output
+        domains = output["domains"]
+        assert any(d["domain"] == "example.com" and d["primary"] is True for d in domains)
+        assert any(d["domain"] == "rival.com" and d["primary"] is False for d in domains)
+
+    def test_malformed_competitor_prints_warning(self, monkeypatch, capsys):
+        """A competitor that parses to an empty domain is skipped with a stderr warning."""
+        import geo_benchmark
+
+        monkeypatch.setenv("PERPLEXITY_API_KEY", "fake")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        # "////" prepends to "https:////" which has empty netloc → malformed
+        monkeypatch.setattr("sys.argv", self._base_argv(["--competitors", "////"]))
+        monkeypatch.setattr("geo_benchmark.fetch_headings", lambda url, timeout=15: [("h2", "Test")])
+        monkeypatch.setattr("geo_benchmark.run_benchmark", lambda **kw: {
+            "results": [{"query": "How to Test?", "cited": True, "engines_citing": ["perplexity"], "skipped": False}],
+            "skipped_count": 0,
+            "engine_pair": "perplexity",
+        })
+
+        geo_benchmark.main()
+
+        captured = capsys.readouterr()
+        assert "Warning: skipping malformed competitor domain" in captured.err
+
+    def test_all_skipped_competitor_uses_zero_score_and_shows_table(self, monkeypatch):
+        """Competitor with all-skipped results gets score=0 and comparison table is printed."""
+        import geo_benchmark
+
+        monkeypatch.setenv("PERPLEXITY_API_KEY", "fake")
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.setattr("sys.argv", self._base_argv(["--competitors", "slow.com"]))
+        monkeypatch.setattr("geo_benchmark.fetch_headings", lambda url, timeout=15: [("h2", "Test")])
+
+        call_count = [0]
+        def multi_run(**kw):
+            call_count[0] += 1
+            if call_count[0] == 1:
+                # Primary: one answered question
+                return {
+                    "results": [{"query": "How to Test?", "cited": True, "engines_citing": ["perplexity"], "skipped": False}],
+                    "skipped_count": 0,
+                    "engine_pair": "perplexity",
+                }
+            else:
+                # Competitor: all results skipped → zero-score fallback
+                return {
+                    "results": [{"query": "How to Test?", "cited": False, "engines_citing": [], "skipped": True}],
+                    "skipped_count": 1,
+                    "engine_pair": "perplexity",
+                }
+        monkeypatch.setattr("geo_benchmark.run_benchmark", multi_run)
+
+        captured_prints = []
+        orig_print = print
+        def mock_print(*args, **kwargs):
+            if kwargs.get("file") is sys.stderr:
+                orig_print(*args, **kwargs)
+            else:
+                captured_prints.append(" ".join(str(a) for a in args))
+        monkeypatch.setattr("builtins.print", mock_print)
+
+        geo_benchmark.main()
+
+        full_output = "\n".join(captured_prints)
+        assert "GEO Score Comparison" in full_output
+        assert "slow.com" in full_output

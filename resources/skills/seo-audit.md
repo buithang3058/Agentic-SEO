@@ -17,7 +17,7 @@ Apply `resources/references/llm-audit-rubric.md` for evidence standards, confide
 2. **Detect business type** — analyze homepage signals per seo orchestrator
 3. **Run scripts for evidence** — Always attempt to run relevant scripts for structured data collection. Scripts provide precise, machine-readable evidence that strengthens the analysis:
    - `seo-technical` — robots.txt, sitemaps, canonicals, Core Web Vitals, security headers
-   - `seo-content` — E-E-A-T, readability, thin content, AI citation readiness
+   - `content-audit` — E-E-A-T, readability, thin content, AI citation readiness
    - `seo-schema` — detection, validation, generation recommendations
    - `seo-sitemap` — structure analysis, quality gates, missing pages
    - `seo-performance` — LCP, INP, CLS measurements
