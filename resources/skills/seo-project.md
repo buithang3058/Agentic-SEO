@@ -22,8 +22,10 @@ Active project is tracked in `~/.seo-projects/active`.
   active                        ← name of the active project (1 line)
   diverfi/
     context.md
+    marketing-context.md        ← populated by `marketing interview`
   project-b/
     context.md
+    marketing-context.md
 ```
 
 Project slug = lowercase, no spaces, no diacritics. `diverFi` → `diverfi`.
@@ -99,13 +101,21 @@ Steps:
    - `https://example.com` → `<url>`
    - `YYYY-MM-DD` → today's date
 
-4. Set as active project (write slug to `~/.seo-projects/active`)
-5. Output:
+4. Create `~/.seo-projects/<slug>/marketing-context.md` by copying
+   `resources/context/marketing-context.template.md`, then substituting:
+   - `{{project_name}}` → `<name>`
+   - `updated: ...` → today's date
+   If write fails (permission denied): show error and continue — context.md is sufficient to proceed.
+
+5. Set as active project (write slug to `~/.seo-projects/active`)
+6. Output:
    ```
    Created: ~/.seo-projects/<slug>/context.md
+   Created: ~/.seo-projects/<slug>/marketing-context.md
    Active project → <name>
 
-   Next: fill in context.md then run: content write <topic>
+   Next: fill in context.md, then run: marketing interview
+   Or skip interview and run: content write <topic>
    ```
 
 ---

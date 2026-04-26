@@ -59,6 +59,12 @@ Present: **Angle** (1–2 sentences differentiating from current SERP), **Outlin
 1-line stake per section), **Hook draft** (opening that never starts with a definition),
 **Research notes** (per competitor: angle + gap; fresh data from web search).
 
+For beginner "X là gì" / awareness articles, also include a **Motivation Balance Check**:
+- What makes the reader want to continue learning after this article?
+- Which concrete benefits/use cases are shown before heavy risk sections?
+- For every major risk section, what is the balancing benefit, control, or safer next step?
+- If the outline would make a reasonable beginner less interested in the topic, rebalance before asking for approval.
+
 ### 1.3 Approval checkpoint
 
 Ask: "Approve outline? Or tell me what to change."
@@ -87,6 +93,14 @@ Examples are style patterns — not real events to cite as facts.
 Priority: (1) mistakes/losses → (2) common wrong beliefs → (3) explanation.
 No step lists. Specific stories with specific reasons.
 After important claims: follow with a standalone sentence ≤10 words.
+
+For Pattern B / beginner concept articles, do not let risk dominate the emotional arc.
+Write opportunity-first:
+- Show the hidden problem or desirable outcome early.
+- Explain the useful mechanism with concrete use cases.
+- Introduce risk as the price of the benefit, not as the whole identity of the topic.
+- Pair each major risk with a control path: how to reduce it, what to learn next, or what safer beginner action looks like.
+- Keep the final feeling: "I should learn this carefully", not "I should avoid this entirely."
 
 **Risk/disclaimer:** short, direct sentences. Specific, not generic.
 Good: "Crypto can go to zero. Smart contracts can be hacked. I've lost money because of both."

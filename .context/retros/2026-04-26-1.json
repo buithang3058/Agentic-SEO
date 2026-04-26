@@ -1,0 +1,42 @@
+{
+  "date": "2026-04-26",
+  "window": "7d",
+  "metrics": {
+    "commits": 5,
+    "contributors": 1,
+    "prs_merged": 0,
+    "insertions": 568,
+    "deletions": 925,
+    "net_loc": -357,
+    "test_loc": 0,
+    "test_ratio": 0.0,
+    "active_days": 1,
+    "sessions": 2,
+    "deep_sessions": 0,
+    "avg_session_minutes": 5,
+    "loc_per_session_hour": 0,
+    "feat_pct": 1.0,
+    "fix_pct": 0.0,
+    "peak_hour": 10,
+    "ai_assisted_commits": 5
+  },
+  "authors": {
+    "Bui Thang": {
+      "commits": 5,
+      "insertions": 568,
+      "deletions": 925,
+      "test_ratio": 0.0,
+      "top_area": "resources/skills/"
+    }
+  },
+  "version_range": ["0.0.1.0", "0.0.1.0"],
+  "streak_days": 0,
+  "tweetable": "Week of Apr 19: 5 commits (+568/-925 LOC), token efficiency sprint — SKILL.md compressed to 102 lines, 3 skill files refactored | Streak: 0d (last: Apr 21)",
+  "backlog": {
+    "total_open": 5,
+    "p0_p1": 0,
+    "p2": 1,
+    "completed_this_period": 0,
+    "added_this_period": 0
+  }
+}
