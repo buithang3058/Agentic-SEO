@@ -13,7 +13,7 @@ function countEntries(calibrationPath) {
 function parseEntries(text) {
   const blocks = text.split(/\n\s*\n/).filter(b => /AI-ish:/i.test(b));
   return blocks.map(block => {
-    const get = (field) => block.match(new RegExp(`^${field}:\\s*(.+)`, 'im'))?.[1]?.trim();
+    const get = (field) => block.match(new RegExp(`^${field}:[ \\t]*(.+)`, 'im'))?.[1]?.trim();
     const entry = {
       aiIsh: get('AI-ish'),
       preferred: get('Preferred'),

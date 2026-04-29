@@ -152,6 +152,176 @@ test_status_at_threshold_shows_reminder() {
 with_voice_dir testvoice test_status_at_threshold_shows_reminder
 
 # ---------------------------------------------------------------------------
+# voice-calibrate-add.sh — resolve_voice + title edge cases
+# ---------------------------------------------------------------------------
+
+test_no_voice_arg_uses_default() {
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  export VOICES_DIR="$tmpdir"
+  mkdir -p "$tmpdir/alpha-voice"
+
+  printf 'ai\npref\nwhy\npat\n' \
+    | bash "$SCRIPTS_DIR/voice-calibrate-add.sh" >/dev/null 2>&1 || true
+
+  if [ -f "$tmpdir/alpha-voice/calibration.md" ]; then
+    pass "no arg → default_voice → first dir found"
+  else
+    fail "no arg → default_voice → first dir found" "calibration.md not created in alpha-voice/"
+  fi
+  rm -rf "$tmpdir"; unset VOICES_DIR
+}
+test_no_voice_arg_uses_default
+
+test_no_voice_arg_empty_voices_dir_exits() {
+  local tmpdir
+  tmpdir="$(mktemp -d)"
+  export VOICES_DIR="$tmpdir"  # empty — no subdirs
+
+  local exit_code=0
+  printf 'ai\npref\nwhy\npat\n' \
+    | bash "$SCRIPTS_DIR/voice-calibrate-add.sh" >/dev/null 2>&1 || exit_code=$?
+
+  if [ "$exit_code" -ne 0 ]; then
+    pass "no arg AND empty VOICES_DIR → exit 1"
+  else
+    fail "no arg AND empty VOICES_DIR → exit 1" "expected non-zero exit, got $exit_code"
+  fi
+  rm -rf "$tmpdir"; unset VOICES_DIR
+}
+test_no_voice_arg_empty_voices_dir_exits
+
+test_appends_without_duplicating_header() {
+  local tmpdir="$1" voice="$2"
+  local cal="$tmpdir/$voice/calibration.md"
+
+  # Pre-create calibration file with header
+  printf '# Calibration: %s\n' "$voice" > "$cal"
+
+  printf 'ai\npref\nwhy\npat\n' \
+    | bash "$SCRIPTS_DIR/voice-calibrate-add.sh" "$voice" >/dev/null 2>&1
+
+  local header_count
+  header_count="$(grep -c '^# Calibration:' "$cal" 2>/dev/null || echo 0)"
+  if [ "$header_count" -eq 1 ]; then
+    pass "calibration.md exists → appends without duplicating header"
+  else
+    fail "calibration.md exists → appends without duplicating header" "header count: $header_count"
+  fi
+}
+with_voice_dir testvoice test_appends_without_duplicating_header
+
+test_blank_preferred_title_is_untitled() {
+  local tmpdir="$1" voice="$2"
+  local cal="$tmpdir/$voice/calibration.md"
+
+  printf 'ai text\n   \nwhy text\npattern text\n' \
+    | bash "$SCRIPTS_DIR/voice-calibrate-add.sh" "$voice" >/dev/null 2>&1
+
+  if grep -q '^## Entry 1: Untitled' "$cal" 2>/dev/null; then
+    pass "blank preferred → title is 'Untitled'"
+  else
+    fail "blank preferred → title is 'Untitled'" "entry header: $(grep '^## Entry' "$cal" 2>/dev/null || echo '(missing)')"
+  fi
+}
+with_voice_dir testvoice test_blank_preferred_title_is_untitled
+
+test_long_preferred_title_truncated() {
+  local tmpdir="$1" voice="$2"
+  local cal="$tmpdir/$voice/calibration.md"
+
+  local long_pref
+  long_pref="$(printf 'x%.0s' $(seq 1 80))"
+  printf 'ai text\n%s\nwhy text\npattern text\n' "$long_pref" \
+    | bash "$SCRIPTS_DIR/voice-calibrate-add.sh" "$voice" >/dev/null 2>&1
+
+  local title
+  title="$(grep '^## Entry' "$cal" 2>/dev/null | sed 's/^## Entry [0-9]*: //')"
+  if [ "${#title}" -le 60 ]; then
+    pass "preferred >60 chars → title truncated to ≤60"
+  else
+    fail "preferred >60 chars → title truncated to ≤60" "title length ${#title}: $title"
+  fi
+}
+with_voice_dir testvoice test_long_preferred_title_truncated
+
+# ---------------------------------------------------------------------------
+# voice-status.sh — DNA file paths
+# ---------------------------------------------------------------------------
+
+test_status_dna_missing() {
+  local tmpdir="$1" voice="$2"
+  local cal="$tmpdir/$voice/calibration.md"
+  printf '# Calibration: %s\n' "$voice" > "$cal"
+
+  local output
+  output="$(bash "$SCRIPTS_DIR/voice-status.sh" "$voice" 2>&1)"
+
+  if echo "$output" | grep -q "DNA words: missing"; then
+    pass "dna.md missing → shows 'DNA words: missing'"
+  else
+    fail "dna.md missing → shows 'DNA words: missing'" "output: $output"
+  fi
+}
+with_voice_dir testvoice test_status_dna_missing
+
+test_status_dna_under_500_words() {
+  local tmpdir="$1" voice="$2"
+  local cal="$tmpdir/$voice/calibration.md"
+  local dna="$tmpdir/$voice/dna.md"
+  printf '# Calibration: %s\n' "$voice" > "$cal"
+  printf '%s ' $(seq 1 50) > "$dna"  # 50 words
+
+  local output
+  output="$(bash "$SCRIPTS_DIR/voice-status.sh" "$voice" 2>&1)"
+
+  if echo "$output" | grep -q "DNA words:" && ! echo "$output" | grep -q "over 500"; then
+    pass "dna.md ≤500 words → shows count, no warning"
+  else
+    fail "dna.md ≤500 words → shows count, no warning" "output: $output"
+  fi
+}
+with_voice_dir testvoice test_status_dna_under_500_words
+
+test_status_dna_over_500_words() {
+  local tmpdir="$1" voice="$2"
+  local cal="$tmpdir/$voice/calibration.md"
+  local dna="$tmpdir/$voice/dna.md"
+  printf '# Calibration: %s\n' "$voice" > "$cal"
+  printf '%s ' $(seq 1 501) > "$dna"  # 501 words
+
+  local output
+  output="$(bash "$SCRIPTS_DIR/voice-status.sh" "$voice" 2>&1)"
+
+  if echo "$output" | grep -q "over 500 words"; then
+    pass "dna.md >500 words → shows warning"
+  else
+    fail "dna.md >500 words → shows warning" "output: $output"
+  fi
+}
+with_voice_dir testvoice test_status_dna_over_500_words
+
+test_status_recent_patterns_shown() {
+  local tmpdir="$1" voice="$2"
+  local cal="$tmpdir/$voice/calibration.md"
+
+  {
+    printf '# Calibration: %s\n' "$voice"
+    printf '\n## Entry 1: x\nAI-ish: a\nPreferred: b\nWhy: c\nPattern: use short sentences\n'
+  } > "$cal"
+
+  local output
+  output="$(bash "$SCRIPTS_DIR/voice-status.sh" "$voice" 2>&1)"
+
+  if echo "$output" | grep -q "Recent patterns" && echo "$output" | grep -q "use short sentences"; then
+    pass "recent patterns shown in output"
+  else
+    fail "recent patterns shown in output" "output: $output"
+  fi
+}
+with_voice_dir testvoice test_status_recent_patterns_shown
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 

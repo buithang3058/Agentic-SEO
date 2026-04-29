@@ -100,6 +100,16 @@ Why: Because reasons
   assert.strictEqual(entries.length, 0);
 });
 
+test('skips blocks where a required field has empty value', () => {
+  const emptyField = `AI-ish: Something
+Preferred:
+Why: Because reasons
+Pattern: Do X
+`;
+  const entries = parseEntries(emptyField);
+  assert.strictEqual(entries.length, 0);
+});
+
 // ---------------------------------------------------------------------------
 // formatEntry
 // ---------------------------------------------------------------------------
