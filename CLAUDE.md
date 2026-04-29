@@ -2,28 +2,11 @@
 ## SEO Agentic commands
 
 These commands are handled by reading skill files directly — do NOT use the Skill tool for them.
+Use the Read tool on the skill file path to load its instructions.
 When `/seo` is loaded, display the full menu from SKILL.md's "On Load" section before doing anything else.
 
-| User types | Read this file and follow its instructions |
-|-----------|-------------------------------------------|
-| `project list` / `project switch` / `project new` / `project status` | `resources/skills/seo-project.md` |
-| `content write <topic>` | `resources/skills/content-writer.md` |
-| `content audit <url>` | `resources/skills/content-audit.md` |
-| `marketing interview` | `resources/skills/marketing-interviewer.md` |
-| `content calendar` / `30-day calendar` | `resources/skills/content-calendar.md` |
-| `seo audit <url>` | `resources/skills/seo-audit.md` |
-| `seo page <url>` | `resources/skills/seo-page.md` |
-| `seo plan <url>` | `resources/skills/seo-plan.md` |
-| `seo geo <url>` | `resources/skills/seo-geo.md` |
-| `seo aeo <url>` | `resources/skills/seo-aeo.md` |
-| `seo links <url>` | `resources/skills/seo-links.md` |
-| `seo hreflang <url>` | `resources/skills/seo-hreflang.md` |
-| `seo competitors <url>` | `resources/skills/seo-competitor-pages.md` |
-| `seo programmatic <url>` | `resources/skills/seo-programmatic.md` |
-| `seo article <url>` | `resources/skills/seo-article.md` |
-| Any other `seo <sub-skill> <url>` | `resources/skills/seo-<sub-skill>.md` |
-
-If unsure which file to read, check the full commands table in `SKILL.md`.
+For the full command→skill routing table, see `SKILL.md` → "Available Commands".
+Fallback pattern for unlisted sub-skills is documented there.
 
 ## Skill routing (gstack — developer tools only)
 

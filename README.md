@@ -67,19 +67,8 @@ The skill will research the topic, propose an outline, wait for your approval, t
 
 ### All available commands
 
-| Command | What it does |
-|---------|-------------|
-| `project new <name> <url>` | Create a new project |
-| `project list` | List all projects |
-| `project switch <name>` | Switch active project |
-| `project status` | Show active project details |
-| `seo audit <url or project name>` | Full website SEO audit |
-| `seo plan <url>` | Strategic SEO plan with topic clusters |
-| `seo page <url>` | Deep single-page analysis |
-| `seo geo <url>` | AI search / GEO optimization |
-| `content write <topic>` | Write SEO article in your voice |
-| `content audit <url>` | Content quality & E-E-A-T check |
-| `merge dna` | Merge writing learnings into your DNA file |
+For the full command reference, type `/seo` in Claude Code to load the interactive menu,
+or see `SKILL.md` → "On Load" section.
 
 ---
 
