@@ -14,9 +14,16 @@ const readline = require('readline');
 function parseArgs() {
   const args = process.argv.slice(2);
   const result = {};
-  for (let i = 0; i < args.length - 1; i++) {
+  for (let i = 0; i < args.length; i++) {
     if (args[i].startsWith('--')) {
-      result[args[i].slice(2)] = args[i + 1];
+      const key = args[i].slice(2);
+      const val = args[i + 1];
+      if (!val || val.startsWith('--')) {
+        console.error(`Missing value for ${args[i]}`);
+        process.exit(1);
+      }
+      result[key] = val;
+      i++;
     }
   }
   return result;
@@ -45,6 +52,8 @@ function ask(rl, question) {
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
+
+let rl = null;
 
 async function main() {
   const args = parseArgs();
@@ -144,7 +153,7 @@ async function main() {
   // Step 2: Interactive review
   // -------------------------------------------------------------------------
 
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   const approvedEntries = [];
 
   console.log(`=== Step 2: Review ${entries.length} proposed entries ===\n`);
@@ -258,6 +267,7 @@ async function main() {
 }
 
 main().catch(err => {
+  if (rl) rl.close();
   console.error('\nError:', err.message);
   process.exit(1);
 });

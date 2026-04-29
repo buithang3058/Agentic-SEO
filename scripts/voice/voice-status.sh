@@ -51,6 +51,10 @@ if [ -f "$CALIBRATION_FILE" ]; then
 fi
 
 ENTRIES_SINCE_MERGE=$(( ENTRY_COUNT - COUNT_AT_MERGE ))
+if [ "$ENTRIES_SINCE_MERGE" -lt 0 ]; then
+  echo "Warning: entry count ($ENTRY_COUNT) < count at last merge ($COUNT_AT_MERGE). calibration.md may have been edited manually."
+  ENTRIES_SINCE_MERGE=0
+fi
 if [ "$ENTRIES_SINCE_MERGE" -ge "$THRESHOLD" ]; then
   echo
   echo "Merge reminder: $ENTRIES_SINCE_MERGE new entries since last merge. Run voice calibrate merge for $VOICE."

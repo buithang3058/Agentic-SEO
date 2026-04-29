@@ -20,7 +20,7 @@ read -r -p "Pattern: " PATTERN
 
 ENTRY_COUNT="$(grep -c '^## Entry' "$CALIBRATION_FILE" 2>/dev/null || true)"
 ENTRY_NUMBER=$((ENTRY_COUNT + 1))
-TITLE="$(printf '%s' "$PREFERRED" | tr '\n' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//; s/[#*_`\\[\\]]//g' | cut -c 1-60)"
+TITLE="$(printf '%s' "$PREFERRED" | tr '\n' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//' | tr -d '#*_`[]' | cut -c 1-60)"
 [ -n "$TITLE" ] || TITLE="Untitled"
 
 # Use printf with explicit format to prevent shell expansion of user-supplied values
