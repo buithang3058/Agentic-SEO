@@ -26,7 +26,8 @@ resources/context/writing-dna.template.md and save to ~/.seo-voices/<your-name>.
 
 **Step 1.3: Load voice calibration (if any)**
 
-Check `resources/context/voices/bui-thang/calibration.md`. If it exists and has 1+ entries:
+Derive the voice name from the DNA filename found in Step 1 (e.g., `~/.seo-voices/bui-thang.md` → voice name `bui-thang`).
+Check `resources/context/voices/<voice-name>/calibration.md`. If it exists and has 1+ entries:
 - Load it alongside writing-dna.
 - Calibration entries override DNA when a specific pattern matches. They are more recent
   corrections — prefer them over general DNA rules when both apply to the same sentence.
