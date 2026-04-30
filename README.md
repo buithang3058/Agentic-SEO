@@ -67,8 +67,7 @@ The skill will research the topic, propose an outline, wait for your approval, t
 
 ### All available commands
 
-For the full command reference, type `/seo` in Claude Code to load the interactive menu,
-or see `SKILL.md` → "On Load" section.
+See [SKILL.md](SKILL.md) for the full command list.
 
 ---
 
@@ -353,7 +352,7 @@ The skill will auto-trigger when you mention SEO-related keywords in your IDE. T
 
 ---
 
-## 💬 Example Prompts (hackingdream.net)
+## 💬 Example Prompts (https://diverFi.com)
 
 ### How Prompts Route to Agents & Scripts
 
@@ -389,8 +388,8 @@ Here's how specific phrases map to the skill's capabilities:
 
 | Input type | What happens | Example |
 |-----------|-------------|---------|
-| **Domain** (`hackingdream.net`) | Crawls multiple pages, checks robots.txt, sitemap, site-wide patterns | Full audit, link profile, sitemap check |
-| **URL** (`hackingdream.net/page`) | Single page deep-dive: HTML, meta, schema, content, CWV | Page audit, schema check, technical check |
+| **Domain** (`diverfi.com`) | Crawls multiple pages, checks robots.txt, sitemap, site-wide patterns | Full audit, link profile, sitemap check |
+| **URL** (`diverfi.com/page`) | Single page deep-dive: HTML, meta, schema, content, CWV | Page audit, schema check, technical check |
 | **Blog post URL** | Article-specific: readability, keyword density, heading structure, JSON-LD `Article`/`BlogPosting` schema, publish date | Article analysis, AEO check |
 
 ---
@@ -398,95 +397,95 @@ Here's how specific phrases map to the skill's capabilities:
 ### 🌐 Full Domain Audit
 
 ```text
-Run a full SEO audit for https://hackingdream.net and prioritize fixes by impact.
+Run a full SEO audit for https://diverfi.com and prioritize fixes by impact.
 ```
 
 ### 📄 Single Page / Blog Post Analysis
 
 ```text
-Analyze this article: https://www.hackingdream.net/2026/02/cobalt-strike-beacon-commands-red-team-field-guide.html
+Analyze this article: https://www.diverfi.com/learn/defi-basics/01-what-is-defi
 ```
 
 ```text
-Do a single-page SEO analysis of https://hackingdream.net and show critical issues first.
+Do a single-page SEO analysis of https://diverfi.com and show critical issues first.
 ```
 
 ### 🔧 Technical SEO
 
 ```text
-Analyze technical SEO for https://hackingdream.net (robots, crawlability, canonicals, redirects, headers).
+Analyze technical SEO for https://diverFi.com (robots, crawlability, canonicals, redirects, headers).
 ```
 
 ### 📝 Content Quality & E-E-A-T
 
 ```text
-Review content quality and E-E-A-T signals on https://hackingdream.net and suggest concrete rewrites.
+Review content quality and E-E-A-T signals on https://diverFi.com and suggest concrete rewrites.
 ```
 
 ### 🏷️ Schema Markup
 
 ```text
-Check schema markup on https://hackingdream.net, validate errors, and generate corrected JSON-LD.
+Check schema markup on https://diverFi.com, validate errors, and generate corrected JSON-LD.
 ```
 
 ### ⚡ Performance & Core Web Vitals
 
 ```text
-Run Core Web Vitals analysis on https://hackingdream.net and break down LCP subparts.
+Run Core Web Vitals analysis on https://diverFi.com and break down LCP subparts.
 ```
 
 ### 🤖 GEO / AI Search Readiness
 
 ```text
-Evaluate GEO readiness for https://hackingdream.net (AI crawler access, llms.txt, citation structure).
+Evaluate GEO readiness for https://diverFi.com (AI crawler access, llms.txt, citation structure).
 ```
 
 ### 🎯 Answer Engine Optimization (AEO)
 
 ```text
-Analyze AEO signals for https://hackingdream.net — Featured Snippet targeting, PAA optimization, Knowledge Panel readiness.
+Analyze AEO signals for https://diverFi.com — Featured Snippet targeting, PAA optimization, Knowledge Panel readiness.
 ```
 
 ### 🔗 Link Profile Analysis
 
 ```text
-Analyze internal link structure and backlink profile for https://hackingdream.net.
+Analyze internal link structure and backlink profile for https://diverFi.com.
 ```
 
 ### 🏛️ Entity SEO / Knowledge Graph
 
 ```text
-Check entity SEO for https://hackingdream.net — Wikidata presence, sameAs links, Knowledge Graph signals.
+Check entity SEO for hhttps://diverFi.com — Wikidata presence, sameAs links, Knowledge Graph signals.
 ```
 
 ### 📊 Competitor Topic Gap
 
 ```text
-Find content gaps between https://hackingdream.net and competitors https://hackerone.com https://portswigger.net.
+Find content gaps between https://diverFi.com and competitors https://www.binance.com/en/academy https://www.fidelity.com/learning-center/trading-investing/crypto/.
 ```
 
 ### 🌍 Hreflang / International SEO
 
 ```text
-Validate hreflang implementation on https://hackingdream.net — BCP-47 tags, bidirectional links, x-default.
+Validate hreflang implementation on https://diverFi.com — BCP-47 tags, bidirectional links, x-default.
 ```
 
 ### 📡 IndexNow
 
 ```text
-Check IndexNow implementation for https://hackingdream.net with key abc123def456.
+Check IndexNow implementation for https://diverFi.com with key abc123def456.
 ```
 
 ### 📋 Topical Cluster Planning
 
 ```text
-Create a topical authority cluster plan for https://hackingdream.net covering cybersecurity topics.
+Create a topical authority cluster plan for https://diverFi.com covering cybersecurity topics.
 ```
 
 ### 📈 Google Search Console (requires credentials)
 
 ```text
-Pull GSC performance data for https://hackingdream.net and identify striking-distance keywords.
+Pull GSC performance data for https://diverFi.com and identify striking-distance keywords.
 ```
 
 ### 🗺️ Sitemap Audit
@@ -539,13 +538,13 @@ You can generate reports in two ways:
 1. **LLM-first report in your IDE (Antigravity / Claude / Codex)** (recommended for strategy + prioritization):
 
 ```text
-Run a full SEO audit for https://hackingdream.net and produce a prioritized action plan with evidence for each finding.
+Run a full SEO audit for https://diverFi.com and produce a prioritized action plan with evidence for each finding.
 ```
 
 2. **Interactive HTML dashboard** (recommended for shareable technical snapshots):
 
 ```bash
-python3 scripts/generate_report.py "https://hackingdream.net" --output seo-report-hackingdream.html
+python3 scripts/generate_report.py "https://diverFi.com" --output seo-report-diverFi.html
 ```
 
 The HTML report includes:

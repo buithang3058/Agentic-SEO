@@ -1,14 +1,26 @@
 
-## SEO Agentic commands
+## diverFi Boundary
 
-These commands are handled by reading skill files directly — do NOT use the Skill tool for them.
+For diverFi work:
+
+- diverFi repo is the authority. Canonical truth: `diverFi/docs/CURRENT.md`
+- `~/.seo-projects/diverfi/context.md` is only an adapter for tool execution
+- seo-agentic is the executor: research, draft, audit, optimize
+- Do not redefine diverFi audience, positioning, business goals, or product direction inside seo-agentic
+- If context.md conflicts with diverFi, diverFi wins — update context.md, not the other way
+
+---
+
+## SEO commands (use Read tool — NOT Skill tool)
+
+These commands are handled by reading skill files directly.
 Use the Read tool on the skill file path to load its instructions.
 When `/seo` is loaded, display the full menu from SKILL.md's "On Load" section before doing anything else.
 
 For the full command→skill routing table, see `SKILL.md` → "Available Commands".
 Fallback pattern for unlisted sub-skills is documented there.
 
-## Skill routing (gstack — developer tools only)
+## Developer tools — gstack (use Skill tool — NOT Read tool)
 
 When the user's request matches a gstack developer skill, invoke it using the Skill
 tool as your FIRST action.
@@ -68,41 +80,6 @@ Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
 
 ## Writing Voice — diverFi
 
-**Voice:** cá nhân, thẳng, logic, câu ngắn, thừa nhận thất bại, có gai nhẹ
-**Tagline VI:** "DeFi không hype. Không shill." | **EN:** "DeFi explained honestly."
-**Measure:** Người đọc có WOW không, và nếu đọc ở trang khác họ có nhận ra đây là diverFi không?
+Source of truth: `~/.seo-voices/bui-thang.md`
 
-### Hard stops
-1. **Không mở bài bằng định nghĩa** — họ cần góc nhìn, không cần từ điển
-2. **Không "bạn cần phải…", "chìa khóa là…"** — dạy đời không có stake là rỗng
-3. **Không khen mà không có rủi ro** — nếu không dám nói cái xấu, cái tốt vô nghĩa
-4. **Claim level rõ ràng:** "tôi" (trải nghiệm thật) / "theo quan sát" / "tôi chưa chắc nhưng"
-5. **Weight test:** mỗi đoạn phải có stake — ai bị ảnh hưởng? Không trả lời được → viết lại
-
-### Never
-- Khuyên mua/bán/đầu tư bất kỳ tài sản
-- Claim x10, x100 không có cơ sở; shill một chiều không có risk disclosure
-- Bold liên tục (max 1 bold/400 từ, tối đa 7 bold/bài 3000 từ)
-- Header/sub-header quá nhiều (tín hiệu chưa hiểu đủ để gộp ý)
-- Giả vờ biết nhiều hơn thực sự biết; viết ngoài tài chính/blockchain
-
-### Pattern selection
-
-| Tiêu đề bài | Pattern | Hook |
-|---|---|---|
-| "[Topic] là gì?" / "Tại sao X quan trọng" | B — Opportunity-first | Vấn đề ẩn reader chưa nhận ra |
-| "Tôi đã thử/mất tiền với X" / "Lỗi phổ biến" | A — Trust-first | Sai lầm cụ thể của tác giả |
-| "Cách làm X" / "Hướng dẫn X" | C — Problem-solution | Frustration reader đang có |
-
-**Pattern B:** personal loss KHÔNG phải hook. Dùng làm credibility signal trong phần rủi ro.
-
-### Writing mechanics
-- Độ dài: <1000 từ tự nhiên | 2000–3500 từ SEO article
-- Hứa hẹn cụ thể trong 200–300 từ đầu
-- Tiêu đề: keyword + số (nếu phù hợp) + hứa hẹn cụ thể
-- Kết bài: "Tóm lại là…" + lập trường rõ ràng (không "tuỳ trường hợp")
-- Câu ngắn trong đoạn personal voice
-
-### Context freshness
-- `writing-dna.md` last updated: 2026-04-15. Nếu >7 ngày từ hôm nay → warn user trước khi viết.
-- `marketing-context.md` (diverFi): **DEFERRED** — không đọc, không prompt. Resume 2026-06-20.
+Read that file before any `content write` command. Do not cache or redefine voice rules here.
