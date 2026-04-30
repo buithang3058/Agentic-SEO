@@ -24,6 +24,15 @@ Detect DNA file path: check `~/.seo-voices/` for `.md` files. Use the first one 
 If no file exists, halt: "Writing-DNA file not found at ~/.seo-voices/ — create one from
 resources/context/writing-dna.template.md and save to ~/.seo-voices/<your-name>.md"
 
+**Step 1.3: Load voice calibration (if any)**
+
+Derive the voice name from the DNA filename found in Step 1 (e.g., `~/.seo-voices/bui-thang.md` → voice name `bui-thang`).
+Check `resources/context/voices/<voice-name>/calibration.md`. If it exists and has 1+ entries:
+- Load it alongside writing-dna.
+- Calibration entries override DNA when a specific pattern matches. They are more recent
+  corrections — prefer them over general DNA rules when both apply to the same sentence.
+- If calibration.md does not exist, proceed with DNA only.
+
 **Step 1.5: Load active project context (if any)**
 
 Check `~/.seo-projects/active`. If non-empty:

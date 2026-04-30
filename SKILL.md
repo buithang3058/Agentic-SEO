@@ -94,6 +94,8 @@ For prompt reliability in Codex/agent IDEs, map common user wording to a fixed w
 | `project switch <name>` | [seo-project](resources/skills/seo-project.md) | Switch active project |
 | `project new <name> <url>` | [seo-project](resources/skills/seo-project.md) | Create new project |
 | `project status` | [seo-project](resources/skills/seo-project.md) | Show active project context |
+| `voice correct` / `voice calibrate add` | [voice-calibrate](resources/skills/voice-calibrate.md) | Correct AI voice; add calibration entries |
+| `voice status` | `VOICES_DIR=resources/context/voices bash scripts/voice/voice-status.sh bui-thang` | Show calibration entry count and recent patterns |
 
 ---
 

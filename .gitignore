@@ -6,3 +6,6 @@ resources/context/writing-dna.md
 # Added by code-review-graph
 .code-review-graph/
 drafts/
+node_modules/
+outputs/
+.env

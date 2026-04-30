@@ -2,6 +2,35 @@
 
 ## P3 — After Phase 2.5 (Competitor Benchmark) validated
 
+### TODO-5: Parallelize --competitors benchmark loop
+
+**What:** Run competitor benchmarks concurrently instead of sequentially. Currently 3 competitors
+run one after another — each benchmark takes ~60s, so 3 competitors = ~4 extra minutes.
+Use `concurrent.futures.ThreadPoolExecutor` to run all competitor `run_benchmark()` calls in
+parallel (within each run, questions are already parallelized).
+
+**Why:** `--competitors` is most useful when comparing 3-5 domains at once. The sequential
+loop means each additional competitor adds a full benchmark run to the wait time.
+With parallelization, 5 competitors would take ~same time as 1.
+
+**Pros:** Dramatically cuts wait time for users with 2+ competitors. Pattern already exists
+in the codebase (`run_benchmark` is thread-safe — it creates its own executor internally).
+
+**Cons:** Increases concurrent API load (could trigger rate limits if many competitors).
+Needs rate-limit-aware design: cap outer parallelism at 3-4 concurrent runs.
+
+**Context:** Found in CEO review 2026-04-27. The sequential design is correct for now
+(simplicity, avoids rate limits). Revisit once --competitors usage patterns are known.
+
+**Effort:** S (team ~2h / CC ~15min) | **Priority:** P3
+**Depends on:** --competitors used in production 5+ times to confirm demand for speed
+
+**Start:** Wrap the competitors loop in `ThreadPoolExecutor(max_workers=3)`.
+Each worker calls `run_benchmark()` for one competitor domain. Collect results, build
+`competitor_rows` from futures. Rate-limit guard: add `time.sleep(1)` between starts.
+
+---
+
 ### TODO-4: Page-level GEO Score (`--page-level` flag)
 
 **What:** Thêm flag `--page-level` vào `geo_benchmark.py`. Khi pass, citation check dùng

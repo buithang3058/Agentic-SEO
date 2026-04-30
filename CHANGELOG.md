@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.3.0] - 2026-04-30
+
+### Added
+
+- **Voice calibration system**: `voice correct` / `voice calibrate add` records correction pairs (AI-ish / Preferred / Why / Pattern) in `resources/context/voices/<voice>/calibration.md`; entries persist across sessions and are loaded alongside writing-dna during content generation
+- **`extract-pairs.js`**: 5-step Node.js script that diffs an AI draft vs the human-preferred version, extracts 2–4 calibration entries via Claude, runs interactive review, appends approved entries, and rewrites the next draft — all in one run
+- **`voice-status.sh`**: shows entry count, merge readiness, DNA word count (warns >500), and last 5 patterns for any voice
+- **Voice calibration templates**: `calibration.template.md` and `dna.template.md` in `resources/context/voices/`
+- **`scripts/lib/extract-lib.js`**: shared parsing helpers (`countEntries`, `parseEntries`, `formatEntry`) used by `extract-pairs.js` and tests
+- **28 tests total** (13 Node.js + 15 bash): covers parseEntries edge cases, entry formatting, voice script edge cases (resolve_voice fallback, header non-duplication, title truncation, DNA word count, merge reminder threshold)
+
+### Changed
+
+- **content-writer Step 1.3**: now derives voice name from the DNA filename detected in Step 1 (`~/.seo-voices/<name>.md` → `<name>`), instead of hardcoding `bui-thang`
+- **Command routing**: SKILL.md is now the single canonical routing table; CLAUDE.md references it instead of duplicating rows; 3 voice commands added to SKILL.md
+- **CLAUDE.md routing**: renamed section headers to make Read-tool vs Skill-tool routing unambiguous; added diverFi boundary note; moved Writing Voice rules to pointer at `~/.seo-voices/bui-thang.md`
+- **README.md commands**: replaced stale 11-command table with pointer to SKILL.md as single source of truth
+
+### Fixed
+
+- `extract-lib.js` regex `\s*` consumed newlines, causing empty field values to silently capture the next line's content — changed to `[ \t]*`
+- `voice-calibrate-add.sh` sed character class `[#*_\`\[\]]` was a no-op on macOS BSD sed — replaced with `tr -d`
+- `extract-pairs.js` readline interface leaked on error paths — `rl` is now module-level, closed in `.catch()`
+- `extract-pairs.js` `parseArgs` silently swallowed flags when a flag value started with `--` — now validates and exits with error
+- `voice-status.sh` negative `ENTRIES_SINCE_MERGE` (when calibration.md is manually edited after a merge) now warns and clamps to 0 instead of triggering a false merge reminder
+- `extract-lib.js` field injection: rewrote `parseEntries` to line-by-line parser — duplicate field labels no longer corrupt field values; multi-line field values are now joined with a space instead of truncated
+- `extract-pairs.js` crash on empty or non-text API response: added content guard and max_tokens truncation warning for both extraction and rewrite steps
+- `extract-pairs.js` `--voice` argument now validated to reject path separators, preventing traversal out of voices directory
+- `voice-status.sh` arithmetic crash when `.last-merge` line 2 contains non-numeric data — now warns and treats as 0
+- `tests/voice-scripts.sh` `with_voice_dir` tmpdir leaked on test function failure — now always cleans up via exit-code capture
+
 ## [0.0.2.0] - 2026-04-26
 
 ### Added
