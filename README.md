@@ -1,6 +1,6 @@
 # SEO Agentic (Antigravity / Claude / Codex)
 
-An LLM-first SEO analysis skill for agent IDEs, with 15 specialized sub-skills, 7 specialist agents, and 25 scripts used as evidence collectors and workflow automation.
+An LLM-first SEO analysis skill for agent IDEs, with 19 specialized sub-skills, 7 specialist agents, and 29 scripts used as evidence collectors and workflow automation.
 
 ## IDE Compatibility
 
@@ -73,9 +73,9 @@ See [SKILL.md](SKILL.md) for the full command list.
 
 ## 📦 Current Inventory
 
-- Specialized sub-skills: `16`
+- Specialized sub-skills: `19`
 - Specialist agents: `7`
-- Scripts in `scripts/`: `25` (`24` Python + `1` shell validation helper)
+- Scripts in `scripts/`: `29` (`25` Python + `1` shell + `1` JS + `2` voice shell scripts)
 
 ## ✨ Features
 
@@ -97,6 +97,9 @@ See [SKILL.md](SKILL.md) for the full command list.
 | `seo competitors` | Comparison & alternatives page generation |
 | `seo hreflang` | International SEO / hreflang validation |
 | `seo plan` | Strategic SEO planning with topical clusters & industry templates |
+| `marketing interview` | 30-question interview to extract positioning and content pillars into `marketing-context.md` |
+| `content calendar` | Generate 7-day or 30-day content plan from marketing context and writing DNA |
+| `voice correct` / `voice calibrate add` | Record AI-vs-preferred correction pairs; build a voice calibration file that tightens output style |
 
 ## 🧠 LLM-First Workflow
 
@@ -455,7 +458,7 @@ Analyze internal link structure and backlink profile for https://diverFi.com.
 ### 🏛️ Entity SEO / Knowledge Graph
 
 ```text
-Check entity SEO for hhttps://diverFi.com — Wikidata presence, sameAs links, Knowledge Graph signals.
+Check entity SEO for https://diverFi.com — Wikidata presence, sameAs links, Knowledge Graph signals.
 ```
 
 ### 📊 Competitor Topic Gap

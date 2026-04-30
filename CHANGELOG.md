@@ -17,9 +17,6 @@ All notable changes to this project will be documented in this file.
 
 - **content-writer Step 1.3**: now derives voice name from the DNA filename detected in Step 1 (`~/.seo-voices/<name>.md` → `<name>`), instead of hardcoding `bui-thang`
 - **Command routing**: SKILL.md is now the single canonical routing table; CLAUDE.md references it instead of duplicating rows; 3 voice commands added to SKILL.md
-
-### Changed
-
 - **CLAUDE.md routing**: renamed section headers to make Read-tool vs Skill-tool routing unambiguous; added diverFi boundary note; moved Writing Voice rules to pointer at `~/.seo-voices/bui-thang.md`
 - **README.md commands**: replaced stale 11-command table with pointer to SKILL.md as single source of truth
 
