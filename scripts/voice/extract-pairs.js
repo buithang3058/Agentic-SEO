@@ -78,6 +78,11 @@ async function main() {
     process.exit(1);
   }
 
+  if (voice.includes('/') || voice.includes('..') || voice.includes('\\')) {
+    console.error('Error: --voice must be a plain name with no path separators.');
+    process.exit(1);
+  }
+
   const root = path.join(__dirname, '../..');
   const voiceDir = path.join(root, 'resources', 'context', 'voices', voice);
   const calibrationPath = path.join(voiceDir, 'calibration.md');
@@ -132,6 +137,12 @@ async function main() {
     ],
   });
 
+  if (!extractionResponse.content?.[0] || extractionResponse.content[0].type !== 'text') {
+    throw new Error('Unexpected API response: missing text content block');
+  }
+  if (extractionResponse.stop_reason === 'max_tokens') {
+    process.stderr.write('Warning: extraction response was truncated (max_tokens). Output may be incomplete.\n');
+  }
   const rawExtraction = extractionResponse.content[0].text.trim();
   console.log(rawExtraction);
   console.log();
@@ -233,6 +244,12 @@ async function main() {
     ],
   });
 
+  if (!rewriteResponse.content?.[0] || rewriteResponse.content[0].type !== 'text') {
+    throw new Error('Unexpected API response: missing text content block in rewrite step');
+  }
+  if (rewriteResponse.stop_reason === 'max_tokens') {
+    process.stderr.write('Warning: rewrite response was truncated (max_tokens). Draft may be incomplete.\n');
+  }
   const rewrittenDraft = rewriteResponse.content[0].text.trim();
   console.log(rewrittenDraft);
   console.log();

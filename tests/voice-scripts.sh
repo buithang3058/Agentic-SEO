@@ -18,9 +18,11 @@ with_voice_dir() {
   tmpdir="$(mktemp -d)"
   export VOICES_DIR="$tmpdir"
   mkdir -p "$tmpdir/$voice"
-  "$fn" "$tmpdir" "$voice"
+  local exit_code=0
+  "$fn" "$tmpdir" "$voice" || exit_code=$?
   rm -rf "$tmpdir"
   unset VOICES_DIR
+  return "$exit_code"
 }
 
 # ---------------------------------------------------------------------------

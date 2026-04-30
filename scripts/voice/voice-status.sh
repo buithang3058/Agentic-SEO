@@ -50,6 +50,10 @@ if [ -f "$CALIBRATION_FILE" ]; then
   grep '^Pattern:' "$CALIBRATION_FILE" | tail -5 | sed 's/^Pattern:[[:space:]]*/- /' || true
 fi
 
+if ! [[ "$COUNT_AT_MERGE" =~ ^[0-9]+$ ]]; then
+  echo "Warning: .last-merge line 2 is not a number ('$COUNT_AT_MERGE'). Treating as 0." >&2
+  COUNT_AT_MERGE=0
+fi
 ENTRIES_SINCE_MERGE=$(( ENTRY_COUNT - COUNT_AT_MERGE ))
 if [ "$ENTRIES_SINCE_MERGE" -lt 0 ]; then
   echo "Warning: entry count ($ENTRY_COUNT) < count at last merge ($COUNT_AT_MERGE). calibration.md may have been edited manually."
