@@ -1,6 +1,6 @@
 {
   "name": "seo-agentic",
-  "version": "1.0.0",
+  "version": "0.0.3.0",
   "private": true,
   "scripts": {
     "test": "node tests/extract.test.js && bash tests/voice-scripts.sh"
